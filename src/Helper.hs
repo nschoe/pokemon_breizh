@@ -15,6 +15,8 @@ module Helper (
               , img
               , sound
               , mapDir
+              , save
+              , settings
               , ttp
               , ptt
               , fmn
@@ -93,6 +95,18 @@ sound = root </> "snd"
 -- Returns the application's map directory
 mapDir :: FilePath
 mapDir = root </> "maps"
+
+
+
+-- Returns the game's save directory
+save :: FilePath
+save = root </> "saves"
+
+
+
+-- Path to settings file
+settings :: FilePath
+settings = root </> ".settings"
 
 
 

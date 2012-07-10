@@ -1,0 +1,13 @@
+# This file is a PoKemon Breizh settings file.
+# It is program-generated, altering it is not recommended
+# You should edit it by hand only if you know what you are doing or
+# if you are god, but as such idiocity doesn't exit... well only if you
+# know what you are doing!
+# Syntax should be pretty easy to guess from the file and won't be explained here
+# Obviously, lines beginning with '#' are treated as comments
+
+[map] = <breizh>
+
+[playerName] = <nschoe>
+
+[loveName] = <finette>

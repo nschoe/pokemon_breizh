@@ -9,7 +9,10 @@ performLogic :: GameState -> AppEnv ()
 performLogic Intro           = introLogic
 performLogic Credits         = creditsLogic
 performLogic Menu            = menuLogic
-performLogic _               = return ()
+performLogic NewGame01       = newGame01Logic
+performLogic NewGame02       = newGame02Logic
+performLogic MenuSettings    = menuSettingsLogic
+performLogic _               = error "logic not handled!"
 
 {-
 ***********************************************************************
@@ -38,3 +41,33 @@ creditsLogic = return ()
 -}
 menuLogic :: AppEnv ()
 menuLogic = return ()
+
+
+
+{-
+***********************************************************************
+*            NewGame01 Logic
+***********************************************************************
+-}
+newGame01Logic :: AppEnv ()
+newGame01Logic = return ()
+
+
+
+{-
+***********************************************************************
+*            NewGame02 Logic
+***********************************************************************
+-}
+newGame02Logic :: AppEnv ()
+newGame02Logic = return ()
+
+
+
+{-
+***********************************************************************
+*            MenuSettings Logic
+***********************************************************************
+-}
+menuSettingsLogic :: AppEnv ()
+menuSettingsLogic = return ()

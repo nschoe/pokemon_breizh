@@ -112,6 +112,15 @@ data GameState =
    -- displays new game, continue, ...
  | Menu
 
+   -- First message of Prof. Euclide
+ | NewGame01
+
+   -- Second message of Prof. Euclide
+ | NewGame02
+
+   -- Edit the global game settings (from the menu)
+ | MenuSettings
+
    -- set when the user wants to exit the game
  | Bye
 

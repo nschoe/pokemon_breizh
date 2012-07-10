@@ -33,7 +33,10 @@ handleEvents' :: GameState -> Event -> AppEnv ()
 handleEvents' Intro event           = introEvents event
 handleEvents' Credits event         = creditsEvents event
 handleEvents' Menu event            = menuEvents event
---handleEvents' _ _                   = error "events not detected"
+handleEvents' NewGame01 event       = newGame01Events event
+handleEvents' NewGame02 event       = newGame02Events event
+handleEvents' MenuSettings event    = menuSettingsEvents event
+handleEvents' _ _                   = error "events not detected"
 
 
 
@@ -111,7 +114,46 @@ menuEvents (KeyDown (Keysym SDLK_DOWN [] _)) = do
 
 -- return key pressed
 menuEvents (KeyDown (Keysym SDLK_RETURN [] _)) = do
+  -- Gets the arrow position
   pos <- liftM fst getMenuSelector
+  
+  -- When pointing to NewGame
+  when (pos == 1) (setNextState NewGame01)
+       
+  -- When pointing to Quit
   when (pos == 3) (setNextState Bye)
 
 menuEvents _ = return ()
+
+
+
+
+{-
+***********************************************************************
+*            NewGame01 Events
+***********************************************************************
+-}
+newGame01Events :: Event -> AppEnv ()
+newGame01Events (KeyDown (Keysym SDLK_RETURN [] _)) = setNextState NewGame02
+newGame01Events _ = return ()
+
+
+
+{-
+***********************************************************************
+*            NewGame02 Events
+***********************************************************************
+-}
+newGame02Events :: Event -> AppEnv ()
+newGame02Events (KeyDown (Keysym SDLK_RETURN [] _)) = setNextState MenuSettings
+newGame02Events _ = return ()
+
+
+
+{-
+***********************************************************************
+*            MenuSettings Events
+***********************************************************************
+-}
+menuSettingsEvents :: Event -> AppEnv ()
+menuSettingsEvents _ = return ()

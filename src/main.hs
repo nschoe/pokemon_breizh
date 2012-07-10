@@ -114,7 +114,7 @@ loop = forever $ do
 
 
 main :: IO ()
-main = withInit [InitEverything] $ do
+main = withInit [InitVideo, InitTimer] $ do
          enableKeyRepeat 100 100
          (res, dat) <- initEnv "breizh"
          evalStateT (runReaderT loop res) dat
