@@ -30,6 +30,9 @@ initEnv mapFile = do
   -- initializes the reader monad (read-only material)
   screen        <- setVideoMode sWidth sHeight sBpp sFlags
   introBg       <- loadImage (img </> "intro_bg.png")
+  creditsBg     <- loadImage (img </> "credits_bg.png")
+  menuArrow     <- loadImage (img </> "menu_arrow.png")
+  menuBg        <- loadImage (img </> "menu_bg.png")
   spriteSheet   <- loadImage (img </> "sprite_sheet.png")
   playerSprites <- loadImage (img </> "player.png")
 
@@ -39,12 +42,16 @@ initEnv mapFile = do
   let camera    = Rect 0 0 sWidth sHeight
       currentSt = Intro
       nextSt    = Null
-      player    = Nothing -- no player yet (still intro screen)
+      player    = Nothing       -- no player yet (still intro screen)
+      arrowPos  = (0, 3)
 
   -- builds the appResource
       res       = AppResource {
                     resScreen         = screen
                   , resIntroBg        = introBg
+                  , resCreditsBg      = creditsBg
+                  , resMenuArrow      = menuArrow
+                  , resMenuBg         = menuBg
                   , resSpriteSheet    = spriteSheet
                   , resPlayerSprites  = playerSprites
                   }
@@ -54,6 +61,7 @@ initEnv mapFile = do
                     appWorld          = world
                   , appFps            = fps
                   , appCamera         = camera
+                  , appMenuSelector   = arrowPos
                   , appCurrentState   = currentSt
                   , appNextState      = nextSt
                   , appPlayer         = player

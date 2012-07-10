@@ -63,6 +63,9 @@ type AppEnv   = ReaderT AppResource AppState
 data AppResource = AppResource {
       resScreen        :: Surface -- the screen to blit on
     , resIntroBg       :: Surface -- Introduction screen background
+    , resCreditsBg     :: Surface -- Credits screen background
+    , resMenuArrow     :: Surface -- The little arrow used to select menu
+    , resMenuBg        :: Surface -- menu background, with selection options
     , resSpriteSheet   :: Surface -- the tile sprites
     , resPlayerSprites :: Surface -- main player's sprites
     } deriving (Show)
@@ -72,6 +75,7 @@ data AppData = AppData {
       appWorld        :: World     -- the map
     , appFps          :: Timer     -- to cap frame rate
     , appCamera       :: Camera    -- our field of vision
+    , appMenuSelector :: (Int,Int) -- (pos, maxValue) of our menu selector
     , appCurrentState :: GameState -- current state the application is in
     , appNextState    :: GameState -- next state to be set when calling changeState
     , appPlayer       :: Maybe Player
@@ -83,6 +87,7 @@ data Player = Player {
     , plDir       :: Direction
     } deriving (Show)
 
+-- Basic Enum type to know what player's sprite to draw
 data Direction =
                  StopUp
                | StopDown

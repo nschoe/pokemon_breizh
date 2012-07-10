@@ -21,6 +21,9 @@ module Helper (
               , getScreen
               , getSpriteSheet
               , getIntroBg
+              , getCreditsBg
+              , getMenuBg
+              , getMenuArrow
               , getWorld
               , putWorld
               , getDim
@@ -34,6 +37,8 @@ module Helper (
               , putNextState
               , getPlayer
               , putPlayer
+              , getMenuSelector
+              , putMenuSelector
               ) where
 
 import Control.Monad (liftM)
@@ -126,6 +131,15 @@ getPlayerSprites = liftM resPlayerSprites ask
 getIntroBg :: MonadReader AppResource m => m Surface
 getIntroBg = liftM resIntroBg ask
 
+getCreditsBg :: MonadReader AppResource m => m Surface
+getCreditsBg = liftM resCreditsBg ask
+
+getMenuBg :: MonadReader AppResource m => m Surface
+getMenuBg = liftM resMenuBg ask
+
+getMenuArrow :: MonadReader AppResource m => m Surface
+getMenuArrow = liftM resMenuArrow ask
+
 -- AppData (MonadState)
 getWorld :: MonadState AppData m => m World
 getWorld = liftM appWorld get
@@ -165,3 +179,9 @@ getPlayer = liftM appPlayer get
 
 putPlayer :: MonadState AppData m => (Maybe Player) -> m ()
 putPlayer p = modify $ \s -> s { appPlayer = p }
+
+getMenuSelector :: MonadState AppData m => m (Int, Int)
+getMenuSelector = liftM appMenuSelector get
+
+putMenuSelector :: MonadState AppData m => (Int, Int) -> m ()
+putMenuSelector n = modify $ \s -> s { appMenuSelector = n }

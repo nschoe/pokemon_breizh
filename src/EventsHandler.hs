@@ -3,7 +3,7 @@ module EventsHandler (
                      , changeState
                      ) where
 
-import Control.Monad (when)
+import Control.Monad (when, liftM)
 import Control.Monad.IO.Class (liftIO)
 
 import Graphics.UI.SDL as SDL
@@ -18,11 +18,11 @@ handleEvents :: GameState -> AppEnv ()
 handleEvents gs = do
   event <- liftIO pollEvent
   case event of
-    Quit                                       -> setNextState Bye
+    Quit                                           -> setNextState Bye
     KeyDown (Keysym SDLK_q [KeyModLeftCtrl] _)     -> setNextState Bye
     KeyDown (Keysym SDLK_f [KeyModLeftAlt] _)      -> getScreen >>= liftIO . toggleFullscreen
-    NoEvent                                    -> return ()
-    _                                          -> do
+    NoEvent                                        -> return ()
+    _                                              -> do
                     handleEvents' gs event
                     handleEvents gs
 
@@ -30,8 +30,10 @@ handleEvents gs = do
 
 -- Makes appropriate function calls to handle events, based on GameState
 handleEvents' :: GameState -> Event -> AppEnv ()
-handleEvents' Intro event = introEvents event
-handleEvents' _ _ = return ()
+handleEvents' Intro event           = introEvents event
+handleEvents' Credits event         = creditsEvents event
+handleEvents' Menu event            = menuEvents event
+--handleEvents' _ _                   = error "events not detected"
 
 
 
@@ -59,10 +61,7 @@ changeState = do
 -- Actual state changing function
 changeState' :: GameState -> AppEnv ()
 
--- Exit event
 changeState' Bye = putCurrentState Bye
-
--- Other
 changeState' gs   = putCurrentState gs
 
 
@@ -72,7 +71,6 @@ changeState' gs   = putCurrentState gs
 *            Intro Events
 ***********************************************************************
 -}
-
 introEvents :: Event -> AppEnv ()
 introEvents (KeyDown (Keysym SDLK_RETURN [] _)) = setNextState Credits
 introEvents _ = return ()
@@ -82,3 +80,38 @@ introEvents _ = return ()
 *            Credits Events
 ***********************************************************************
 -}
+creditsEvents :: Event -> AppEnv ()
+creditsEvents (KeyDown (Keysym SDLK_RETURN [] _)) = setNextState Menu
+creditsEvents _ = return ()
+
+{-
+***********************************************************************
+*            Menu Events
+***********************************************************************
+-}
+menuEvents :: Event -> AppEnv ()
+
+-- arrow up
+menuEvents (KeyDown (Keysym SDLK_UP [] _)) = do
+  (pos,maxi) <- getMenuSelector
+  let pos' = if pos == 0 then
+                 maxi
+             else
+                 pred pos
+  putMenuSelector (pos', maxi)
+
+-- arrow down
+menuEvents (KeyDown (Keysym SDLK_DOWN [] _)) = do
+  (pos,maxi) <- getMenuSelector
+  let pos' = if pos == maxi then
+                 0
+             else
+                 succ pos
+  putMenuSelector (pos', maxi)
+
+-- return key pressed
+menuEvents (KeyDown (Keysym SDLK_RETURN [] _)) = do
+  pos <- liftM fst getMenuSelector
+  when (pos == 3) (setNextState Bye)
+
+menuEvents _ = return ()
