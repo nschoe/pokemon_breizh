@@ -43,6 +43,7 @@ initEnv mapFile = do
   playerSprites <- loadImage (img </> "player_sprites.png")
   newGame01     <- loadImage (img </> "new_game_01.png")
   newGame02     <- loadImage (img </> "new_game_02.png")
+  newGame03     <- loadImage (img </> "new_game_03.png")
 
   -- initializes the state monad (read-write material)
   world          <- parseMap (fmn mapFile)
@@ -53,7 +54,7 @@ initEnv mapFile = do
       nextSt     = Null
       gameData   = Nothing       -- no data yet (will be loaded from save game)
       arrowPos   = (0, 3)
-      newGameBgs = Just (listArray (0,1) [newGame01, newGame02])
+      newGameBgs = Just (listArray (0,2) [newGame01, newGame02, newGame03])
       plClpsList = map (\(dir, (x,y,w,h)) -> (dir, Rect x y w h)) [
                                                                    (StopUp, (186, 0, 48, 48))
                                                                  , (StopDown, (128, 65, 48, 48))
@@ -148,3 +149,17 @@ main = withInit [InitVideo, InitTimer] $ do
            (res, dat) <- initEnv "breizh"
            evalStateT (runReaderT loop res) dat
            TTFG.quit
+
+
+{- Test Part -}
+{-
+pokemon = Pokemon "bulbizarre" 1 100 100 15 14 13 12 11
+team = Team pokemon pokemon pokemon pokemon pokemon pokemon
+inventory = Inventory 2 [(Item "argent" "Sert a payer les objets"), (Item "Super Bonbon" "Augmente d'un le niveau d'un pokemon")]
+badges = [BadgeThree, BadgeFour]
+player = Player "nicolas" team inventory badges
+pos = (33, 42)
+dir = StopDown
+clock = 1234567890
+gameData = GameData player pos dir clock
+-}

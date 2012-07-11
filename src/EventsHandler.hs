@@ -35,6 +35,7 @@ handleEvents' Credits event         = creditsEvents event
 handleEvents' Menu event            = menuEvents event
 handleEvents' NewGame01 event       = newGame01Events event
 handleEvents' NewGame02 event       = newGame02Events event
+handleEvents' NewGame03 event       = newGame03Events event
 handleEvents' MenuSettings event    = menuSettingsEvents event
 handleEvents' _ _                   = error "events not detected"
 
@@ -148,8 +149,19 @@ newGame01Events _ = return ()
 ***********************************************************************
 -}
 newGame02Events :: Event -> AppEnv ()
-newGame02Events (KeyDown (Keysym SDLK_RETURN [] _)) = setNextState Menu
+newGame02Events (KeyDown (Keysym SDLK_RETURN [] _)) = setNextState NewGame03
 newGame02Events _ = return ()
+
+
+
+{-
+***********************************************************************
+*            NewGame03 Events
+***********************************************************************
+-}
+newGame03Events :: Event -> AppEnv ()
+newGame03Events (KeyDown (Keysym SDLK_RETURN [] _)) = setNextState (Menu)
+newGame03Events _ = return ()
 
 
 

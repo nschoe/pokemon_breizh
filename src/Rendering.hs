@@ -28,6 +28,7 @@ rendering Credits             = creditsRendering
 rendering Menu                = menuRendering
 rendering NewGame01           = newGame01Rendering
 rendering NewGame02           = newGame02Rendering
+rendering NewGame03           = newGame03Rendering
 rendering MenuSettings        = menuSettingsRendering
 rendering _                   = return ()
 
@@ -130,6 +131,27 @@ newGame02Rendering = do
   screen          <- getScreen
   Just bgs        <- getNewGameBgs -- safe: bgs are loaded here.
   let newGameBg   = bgs ! 1
+
+  -- Blits
+  liftIO $ do
+    applySurface 0 0 newGameBg screen Nothing
+
+  return ()
+
+
+
+{-
+***********************************************************************
+*            NewGame03 Rendering
+***********************************************************************
+-}
+newGame03Rendering :: AppEnv ()
+newGame03Rendering = do
+  -- Don't forget to call free surface when loading the game
+  -- Gets resources
+  screen          <- getScreen
+  Just bgs        <- getNewGameBgs -- safe: bgs are loaded here.
+  let newGameBg   = bgs ! 2
 
   -- Blits
   liftIO $ do

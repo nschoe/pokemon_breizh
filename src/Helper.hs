@@ -21,6 +21,9 @@ module Helper (
               , ttp
               , ptt
               , fmn
+              , serializeGameData
+              , parseGameData
+              , showPlayer
               , getScreen
               , getSpriteSheet
               , getIntroBg
@@ -55,6 +58,7 @@ import Control.Monad.Reader
 
 import Data.Array (Array(..), (!))
 import Data.Map (Map)
+import qualified Data.Map as Map ((!))
 import Data.Word (Word16)
 
 import Graphics.UI.SDL as SDL
@@ -143,6 +147,37 @@ ptt n = n `div` tileDim
 -- FullMapName
 fmn :: String -> FilePath
 fmn mapName = mapDir </> mapName ++ ".pokemap"
+
+
+
+-- Serializes a GameData instance, to store in file
+serializeGameData :: GameData -> String
+serializeGameData = show
+
+
+
+-- Reads a save file and returns the associated GameData
+parseGameData :: FilePath -> IO GameData
+parseGameData = return . read
+
+
+
+-- Saves key typping in displaying the character.
+showPlayer :: AppEnv ()
+showPlayer  = do
+  -- Gets the gameData
+  Just (gd@GameData{ gPos = (x, y), gDir = dir  }) <- getGameData
+  c@(Rect cx cy cw ch) <- getCamera
+
+  -- Gets the player sprite sheet, to know what sprite to display
+  playerSprite <- getPlayerSprites
+  clip         <- liftM (Map.! dir) getPlayerClips
+
+  -- Blits
+  screen       <- getScreen
+  liftIO $ applySurface (ttp x - cx) (ttp y - cy) playerSprite screen (Just clip)
+
+  return ()
 
 
 

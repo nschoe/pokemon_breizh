@@ -85,7 +85,7 @@ data AppResource = AppResource {
 
 -- State of the application
 data AppData = AppData {
-      appWorld        :: World     -- the map
+      appWorld        :: World
     , appFps          :: Timer     -- to cap frame rate
     , appCamera       :: Camera    -- our field of vision
     , appMenuSelector :: (Int,Int) -- (pos, maxValue) of our menu selector
@@ -99,6 +99,7 @@ data AppData = AppData {
 -- Contains data about the player (is what is saved/loaded)
 data GameData = GameData {
       gPlayer          :: Player
+    , gLove            :: String
     , gPos             :: (Int, Int) -- (x, y) player position on the map (in tiles)
     , gDir             :: Direction  -- to know what tile to display
     , gClock           :: Integer    -- Stores the timestamp when the charatcers started playing.
@@ -107,7 +108,7 @@ data GameData = GameData {
 -- Pokemon player''s info
 data Player = Player {
       plName      :: String
-    , plTeam      :: Team
+    , plTeam      :: Maybe Team
     , plInventory :: Inventory
     , plBadges    :: [Badge]
     } deriving (Show, Read)
@@ -150,7 +151,7 @@ data Badge =
 -- Representation of a Pokemon
 data Pokemon = Pokemon {
       kName       :: String
-    , kNumner     :: Int    -- its number in the Pokedex
+    , kNumber     :: Int    -- its number in the Pokedex
     , kHp         :: Int    -- current life
     , kMaxHp      :: Int    -- max life
     , kAttack     :: Int
@@ -190,6 +191,9 @@ data GameState =
 
    -- Second message of Prof. Euclide
  | NewGame02
+
+   -- Third message of Prof. Euclide (Init game data)
+ | NewGame03
 
    -- Edit the global game settings (from the menu)
  | MenuSettings
