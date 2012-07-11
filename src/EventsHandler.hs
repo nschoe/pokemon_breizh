@@ -119,6 +119,9 @@ menuEvents (KeyDown (Keysym SDLK_RETURN [] _)) = do
   
   -- When pointing to NewGame
   when (pos == 1) (setNextState NewGame01)
+
+  -- Whne pointing to Settings
+  when (pos == 2) (setNextState MenuSettings)
        
   -- When pointing to Quit
   when (pos == 3) (setNextState Bye)
@@ -145,7 +148,7 @@ newGame01Events _ = return ()
 ***********************************************************************
 -}
 newGame02Events :: Event -> AppEnv ()
-newGame02Events (KeyDown (Keysym SDLK_RETURN [] _)) = setNextState MenuSettings
+newGame02Events (KeyDown (Keysym SDLK_RETURN [] _)) = setNextState Menu
 newGame02Events _ = return ()
 
 
@@ -156,4 +159,5 @@ newGame02Events _ = return ()
 ***********************************************************************
 -}
 menuSettingsEvents :: Event -> AppEnv ()
+menuSettingsEvents (KeyDown (Keysym SDLK_ESCAPE [] _)) = setNextState Menu
 menuSettingsEvents _ = return ()

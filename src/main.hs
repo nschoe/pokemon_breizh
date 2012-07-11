@@ -4,7 +4,12 @@ import Control.Monad (forever, when)
 import Control.Monad.Reader
 import Control.Monad.State
 
+import Data.Array (listArray)
+
 import Graphics.UI.SDL as SDL
+import qualified Graphics.UI.SDL.TTF.General as TTFG
+import Graphics.UI.SDL.TTF.Management
+import Graphics.UI.SDL.TTF.Render
 
 import System.Exit (exitSuccess, exitFailure)
 import System.FilePath (FilePath, (</>))
@@ -35,15 +40,19 @@ initEnv mapFile = do
   menuBg        <- loadImage (img </> "menu_bg.png")
   spriteSheet   <- loadImage (img </> "sprite_sheet.png")
   playerSprites <- loadImage (img </> "player.png")
+  newGame01     <- loadImage (img </> "new_game_01.png")
+  newGame02     <- loadImage (img </> "new_game_02.png")
 
   -- initializes the state monad (read-write material)
-  world         <- parseMap (fmn mapFile)
-  fps           <- start defaultTimer
-  let camera    = Rect 0 0 sWidth sHeight
-      currentSt = Intro
-      nextSt    = Null
-      player    = Nothing       -- no player yet (still intro screen)
-      arrowPos  = (0, 3)
+  world          <- parseMap (fmn mapFile)
+  fps            <- start defaultTimer
+  pokemonFont    <- openFont (fonts </> "pokemon_gb.ttf") 20
+  let camera     = Rect 0 0 sWidth sHeight
+      currentSt  = Intro
+      nextSt     = Null
+      player     = Nothing       -- no player yet (still intro screen)
+      arrowPos   = (0, 3)
+      newGameBgs = Just (listArray (0,1) [newGame01, newGame02])
 
   -- builds the appResource
       res       = AppResource {
@@ -54,6 +63,7 @@ initEnv mapFile = do
                   , resMenuBg         = menuBg
                   , resSpriteSheet    = spriteSheet
                   , resPlayerSprites  = playerSprites
+                  , resPokemonFont    = pokemonFont
                   }
   
   -- builds the appData
@@ -61,6 +71,7 @@ initEnv mapFile = do
                     appWorld          = world
                   , appFps            = fps
                   , appCamera         = camera
+                  , appNewGameBgs     = newGameBgs
                   , appMenuSelector   = arrowPos
                   , appCurrentState   = currentSt
                   , appNextState      = nextSt
@@ -115,6 +126,12 @@ loop = forever $ do
 
 main :: IO ()
 main = withInit [InitVideo, InitTimer] $ do
-         enableKeyRepeat 100 100
-         (res, dat) <- initEnv "breizh"
-         evalStateT (runReaderT loop res) dat
+         ttfInit <- TTFG.init
+         if not ttfInit then do
+             putStrLn "Failed to initialize SDL TTF"
+             exitFailure
+         else do
+           enableKeyRepeat 100 100
+           (res, dat) <- initEnv "breizh"
+           evalStateT (runReaderT loop res) dat
+           TTFG.quit

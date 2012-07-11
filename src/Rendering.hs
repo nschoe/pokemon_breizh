@@ -5,10 +5,21 @@ module Rendering (
 import Control.Monad (liftM)
 import Control.Monad.IO.Class (liftIO)
 
+import Data.Array ((!))
+import Data.Map (Map)
+import qualified Data.Map as Map
+
+import Graphics.UI.SDL (fillRect, getClipRect, surfaceGetPixelFormat, mapRGB)
+import Graphics.UI.SDL.Color (Color(..))
+import qualified Graphics.UI.SDL.TTF.General as TTFG
+import Graphics.UI.SDL.TTF.Management
+import Graphics.UI.SDL.TTF.Render
+
 import System.FilePath ((</>))
 
 import Types
 import Helper
+import Settings
 
 -- Main rendering function, makes appropriate calls to rendering functions
 rendering :: GameState -> AppEnv ()
@@ -18,7 +29,7 @@ rendering Menu                = menuRendering
 rendering NewGame01           = newGame01Rendering
 rendering NewGame02           = newGame02Rendering
 rendering MenuSettings        = menuSettingsRendering
-rendering _                   = error "rendering not handled!"
+rendering _                   = return ()
 
 
 
@@ -95,8 +106,9 @@ menuRendering = do
 newGame01Rendering :: AppEnv ()
 newGame01Rendering = do
   -- Gets resources
-  screen     <- getScreen
-  newGameBg  <- liftIO $ loadImage (img </> "new_game_01.png")
+  screen          <- getScreen
+  Just bgs        <- getNewGameBgs -- safe: bgs are loaded here.
+  let newGameBg   = bgs ! 0
 
   -- Blits
   liftIO $ do
@@ -113,15 +125,11 @@ newGame01Rendering = do
 -}
 newGame02Rendering :: AppEnv ()
 newGame02Rendering = do
-  problem2
-  -- Bad idea: loadImage will be called at every loop!
-  -- Better: use a Maybe type to store new game bgs in initEnv
-  -- Initially init them to store the background
-  -- Call freeSurface on them and set them to Nothing when
-  -- changing from the menu to the game
+  -- Don't forget to call free surface when loading the game
   -- Gets resources
-  screen     <- getScreen
-  newGameBg  <- liftIO $ loadImage (img </> "new_game_02.png")
+  screen          <- getScreen
+  Just bgs        <- getNewGameBgs -- safe: bgs are loaded here.
+  let newGameBg   = bgs ! 1
 
   -- Blits
   liftIO $ do
@@ -138,8 +146,33 @@ newGame02Rendering = do
 -}
 menuSettingsRendering :: AppEnv ()
 menuSettingsRendering = do
-  problem
-  -- parse settings from settings file
-  -- load the font in initEnv
-  -- create messages with settings
-  -- display them.
+  -- Parses the settings file
+  settings        <- liftIO $ parseSettings settings
+  
+  -- Gets the resources
+  font            <- getPokemonFont
+  screen          <- getScreen
+
+  -- Reads the settings
+  let
+      Just playerName = Map.lookup "playerName" settings -- the application will fail if absent
+      Just loveName   = Map.lookup "loveName" settings
+      Just pokeMap    = Map.lookup "map" settings
+
+  -- Generates the black screen
+  bgColor   <- liftIO $ (mapRGB . surfaceGetPixelFormat) screen 0 0 0
+  clipRect  <- liftIO $ getClipRect screen
+
+  -- Generates messages
+  playerMsg <- liftIO $ renderTextSolid font ("Votre nom d'aventurier: " ++ playerName) (Color 255 255 255)
+  loveMsg   <- liftIO $ renderTextSolid font ("Le nom de votre bien aimee: " ++ loveName) (Color 255 255 255)
+  mapMsg    <- liftIO $ renderTextSolid font ("Vous jouez sur la carte: " ++ pokeMap) (Color 255 255 255)
+
+  -- Blits
+  liftIO $ do
+    fillRect screen (Just clipRect) bgColor
+    applySurface 75 70 playerMsg screen Nothing
+    applySurface 75 130 loveMsg screen Nothing
+    applySurface 75 190 mapMsg screen Nothing
+
+  return ()

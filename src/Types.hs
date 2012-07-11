@@ -25,6 +25,10 @@ import Data.Array
 import Data.Word (Word16)
 
 import Graphics.UI.SDL (Rect, Surface)
+import Graphics.UI.SDL.TTF.General as TTFG
+import Graphics.UI.SDL.TTF.Management
+import Graphics.UI.SDL.TTF.Render
+import Graphics.UI.SDL.TTF.Types (Font)
 
 import Pokemap
 import Timer
@@ -68,6 +72,7 @@ data AppResource = AppResource {
     , resMenuBg        :: Surface -- menu background, with selection options
     , resSpriteSheet   :: Surface -- the tile sprites
     , resPlayerSprites :: Surface -- main player's sprites
+    , resPokemonFont   :: Font    -- Pokemon GB font
     } deriving (Show)
 
 -- State of the application
@@ -76,6 +81,7 @@ data AppData = AppData {
     , appFps          :: Timer     -- to cap frame rate
     , appCamera       :: Camera    -- our field of vision
     , appMenuSelector :: (Int,Int) -- (pos, maxValue) of our menu selector
+    , appNewGameBgs   :: Maybe (Array Int Surface) -- Set to Nothing when loading game
     , appCurrentState :: GameState -- current state the application is in
     , appNextState    :: GameState -- next state to be set when calling changeState
     , appPlayer       :: Maybe Player

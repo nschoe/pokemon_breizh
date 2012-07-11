@@ -16,6 +16,7 @@ module Helper (
               , sound
               , mapDir
               , save
+              , fonts
               , settings
               , ttp
               , ptt
@@ -26,6 +27,7 @@ module Helper (
               , getCreditsBg
               , getMenuBg
               , getMenuArrow
+              , getPokemonFont
               , getWorld
               , putWorld
               , getDim
@@ -41,16 +43,20 @@ module Helper (
               , putPlayer
               , getMenuSelector
               , putMenuSelector
+              , getNewGameBgs
+              , putNewGameBgs
               ) where
 
 import Control.Monad (liftM)
 import Control.Monad.State
 import Control.Monad.Reader
 
+import Data.Array (Array(..), (!))
 import Data.Word (Word16)
 
 import Graphics.UI.SDL as SDL
 import Graphics.UI.SDL.Image
+import Graphics.UI.SDL.TTF.Types (Font)
 
 import System.FilePath (FilePath, (</>))
 
@@ -104,6 +110,12 @@ save = root </> "saves"
 
 
 
+-- Returns the application's fonts directory
+fonts :: FilePath
+fonts = root </> "fonts"
+
+
+
 -- Path to settings file
 settings :: FilePath
 settings = root </> ".settings"
@@ -154,6 +166,9 @@ getMenuBg = liftM resMenuBg ask
 getMenuArrow :: MonadReader AppResource m => m Surface
 getMenuArrow = liftM resMenuArrow ask
 
+getPokemonFont :: MonadReader AppResource m => m Font
+getPokemonFont = liftM resPokemonFont ask
+
 -- AppData (MonadState)
 getWorld :: MonadState AppData m => m World
 getWorld = liftM appWorld get
@@ -199,3 +214,9 @@ getMenuSelector = liftM appMenuSelector get
 
 putMenuSelector :: MonadState AppData m => (Int, Int) -> m ()
 putMenuSelector n = modify $ \s -> s { appMenuSelector = n }
+
+getNewGameBgs :: MonadState AppData m => m (Maybe (Array Int Surface))
+getNewGameBgs = liftM appNewGameBgs get
+
+putNewGameBgs :: MonadState AppData m => Maybe (Array Int Surface) -> m ()
+putNewGameBgs n = modify $ \s -> s { appNewGameBgs = n }
