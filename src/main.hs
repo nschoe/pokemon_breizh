@@ -5,6 +5,7 @@ import Control.Monad.Reader
 import Control.Monad.State
 
 import Data.Array (listArray)
+import Data.Map (Map, fromList)
 
 import Graphics.UI.SDL as SDL
 import qualified Graphics.UI.SDL.TTF.General as TTFG
@@ -39,7 +40,7 @@ initEnv mapFile = do
   menuArrow     <- loadImage (img </> "menu_arrow.png")
   menuBg        <- loadImage (img </> "menu_bg.png")
   spriteSheet   <- loadImage (img </> "sprite_sheet.png")
-  playerSprites <- loadImage (img </> "player.png")
+  playerSprites <- loadImage (img </> "player_sprites.png")
   newGame01     <- loadImage (img </> "new_game_01.png")
   newGame02     <- loadImage (img </> "new_game_02.png")
 
@@ -50,9 +51,20 @@ initEnv mapFile = do
   let camera     = Rect 0 0 sWidth sHeight
       currentSt  = Intro
       nextSt     = Null
-      player     = Nothing       -- no player yet (still intro screen)
+      gameData   = Nothing       -- no data yet (will be loaded from save game)
       arrowPos   = (0, 3)
       newGameBgs = Just (listArray (0,1) [newGame01, newGame02])
+      plClpsList = map (\(dir, (x,y,w,h)) -> (dir, Rect x y w h)) [
+                                                                   (StopUp, (186, 0, 48, 48))
+                                                                 , (StopDown, (128, 65, 48, 48))
+                                                                 , (StopLeft, (184, 129, 48, 48))
+                                                                 , (StopRight, (192, 193, 48, 48))
+                                                                 , (WalkingUp, (128, 0, 48, 48))
+                                                                 , (WalkingDown, (129, 129, 48, 48))
+                                                                 , (WalkingLeft, (579, 316, 48, 48))
+                                                                 , (WalkingRight, (633, 316, 48, 48))
+                                                                  ]
+      plClips    = fromList plClpsList
 
   -- builds the appResource
       res       = AppResource {
@@ -63,6 +75,7 @@ initEnv mapFile = do
                   , resMenuBg         = menuBg
                   , resSpriteSheet    = spriteSheet
                   , resPlayerSprites  = playerSprites
+                  , resPlayerClips    = plClips
                   , resPokemonFont    = pokemonFont
                   }
   
@@ -75,7 +88,7 @@ initEnv mapFile = do
                   , appMenuSelector   = arrowPos
                   , appCurrentState   = currentSt
                   , appNextState      = nextSt
-                  , appPlayer         = player
+                  , appGameData       = gameData
                   }
 
   -- Finally returns them (this form makes it easier to handle when updating the appResource and appData types)

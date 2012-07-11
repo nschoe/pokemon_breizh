@@ -28,6 +28,8 @@ module Helper (
               , getMenuBg
               , getMenuArrow
               , getPokemonFont
+              , getPlayerSprites
+              , getPlayerClips
               , getWorld
               , putWorld
               , getDim
@@ -39,8 +41,8 @@ module Helper (
               , putCurrentState
               , getNextState
               , putNextState
-              , getPlayer
-              , putPlayer
+              , getGameData
+              , putGameData
               , getMenuSelector
               , putMenuSelector
               , getNewGameBgs
@@ -52,6 +54,7 @@ import Control.Monad.State
 import Control.Monad.Reader
 
 import Data.Array (Array(..), (!))
+import Data.Map (Map)
 import Data.Word (Word16)
 
 import Graphics.UI.SDL as SDL
@@ -151,9 +154,6 @@ getScreen = liftM resScreen ask
 getSpriteSheet :: MonadReader AppResource m => m Surface
 getSpriteSheet = liftM resSpriteSheet ask
 
-getPlayerSprites :: MonadReader AppResource m => m Surface
-getPlayerSprites = liftM resPlayerSprites ask
-
 getIntroBg :: MonadReader AppResource m => m Surface
 getIntroBg = liftM resIntroBg ask
 
@@ -168,6 +168,12 @@ getMenuArrow = liftM resMenuArrow ask
 
 getPokemonFont :: MonadReader AppResource m => m Font
 getPokemonFont = liftM resPokemonFont ask
+
+getPlayerSprites :: MonadReader AppResource m => m Surface
+getPlayerSprites = liftM resPlayerSprites ask
+
+getPlayerClips :: MonadReader AppResource m => m (Map Direction Rect)
+getPlayerClips = liftM resPlayerClips ask
 
 -- AppData (MonadState)
 getWorld :: MonadState AppData m => m World
@@ -203,11 +209,11 @@ getNextState = liftM appNextState get
 putNextState :: MonadState AppData m => GameState -> m ()
 putNextState g = modify $ \s -> s { appNextState = g }
 
-getPlayer :: MonadState AppData m => m (Maybe Player)
-getPlayer = liftM appPlayer get
+getGameData :: MonadState AppData m => m (Maybe GameData)
+getGameData = liftM appGameData get
 
-putPlayer :: MonadState AppData m => (Maybe Player) -> m ()
-putPlayer p = modify $ \s -> s { appPlayer = p }
+putGameData :: MonadState AppData m => Maybe GameData -> m ()
+putGameData g = modify $ \s -> s { appGameData = g }
 
 getMenuSelector :: MonadState AppData m => m (Int, Int)
 getMenuSelector = liftM appMenuSelector get

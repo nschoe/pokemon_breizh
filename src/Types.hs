@@ -14,14 +14,21 @@ module Types (
              , AppState
              , AppEnv
              , GameState(..)
-             , Player(..)
              , Direction(..)
+             , GameData(..)
+             , Pokemon(..)
+             , Player(..)
+             , Item(..)
+             , Inventory(..)
+             , Badge(..)
+             , Team(..) 
              ) where
 
 import Control.Monad.Reader
 import Control.Monad.State
 
 import Data.Array
+import Data.Map (Map)
 import Data.Word (Word16)
 
 import Graphics.UI.SDL (Rect, Surface)
@@ -71,7 +78,8 @@ data AppResource = AppResource {
     , resMenuArrow     :: Surface -- The little arrow used to select menu
     , resMenuBg        :: Surface -- menu background, with selection options
     , resSpriteSheet   :: Surface -- the tile sprites
-    , resPlayerSprites :: Surface -- main player's sprites
+    , resPlayerSprites :: Surface -- the global player sprite sheet
+    , resPlayerClips   :: Map Direction Rect -- main player's clips
     , resPokemonFont   :: Font    -- Pokemon GB font
     } deriving (Show)
 
@@ -84,14 +92,73 @@ data AppData = AppData {
     , appNewGameBgs   :: Maybe (Array Int Surface) -- Set to Nothing when loading game
     , appCurrentState :: GameState -- current state the application is in
     , appNextState    :: GameState -- next state to be set when calling changeState
-    , appPlayer       :: Maybe Player
+    , appGameData     :: Maybe GameData  -- all info about the player (saved/loaded)
     } deriving (Show)
 
+
+-- Contains data about the player (is what is saved/loaded)
+data GameData = GameData {
+      gPlayer          :: Player
+    , gPos             :: (Int, Int) -- (x, y) player position on the map (in tiles)
+    , gDir             :: Direction  -- to know what tile to display
+    , gClock           :: Integer    -- Stores the timestamp when the charatcers started playing.
+    } deriving (Show, Read)
+
+-- Pokemon player''s info
 data Player = Player {
       plName      :: String
-    , plPos       :: (Int, Int)
-    , plDir       :: Direction
-    } deriving (Show)
+    , plTeam      :: Team
+    , plInventory :: Inventory
+    , plBadges    :: [Badge]
+    } deriving (Show, Read)
+
+-- A Pokemon Team info
+data Team = Team {
+      t1    :: Pokemon
+    , t2    :: Pokemon
+    , t3    :: Pokemon
+    , t4    :: Pokemon
+    , t5    :: Pokemon
+    , t6    :: Pokemon
+    } deriving (Show, Read)
+
+-- A player's inventory
+data Inventory = Inventory {
+      iSize     :: Int -- nb of items in inventory
+    , iItems    :: [Item]
+    } deriving (Show, Read)
+
+-- Representation of an item
+-- Not effect attached to items for now, just display
+data Item = Item {
+      itName :: String
+    , itDesc :: String
+} deriving (Show, Read)
+
+-- Representation of a badge
+data Badge =
+             BadgeOne
+           | BadgeTwo
+           | BadgeThree
+           | BadgeFour
+           | BadgeFive
+           | BadgeSix
+           | BadgeSeven
+           | BadgeHeight
+             deriving (Show, Read, Eq)
+
+-- Representation of a Pokemon
+data Pokemon = Pokemon {
+      kName       :: String
+    , kNumner     :: Int    -- its number in the Pokedex
+    , kHp         :: Int    -- current life
+    , kMaxHp      :: Int    -- max life
+    , kAttack     :: Int
+    , kDefense    :: Int
+    , kSpAttack   :: Int
+    , kSpDefense  :: Int
+    , kSpeed      :: Int
+    } deriving (Show, Read)
 
 -- Basic Enum type to know what player's sprite to draw
 data Direction =
@@ -103,7 +170,7 @@ data Direction =
                | WalkingDown
                | WalkingLeft
                | WalkingRight
-                 deriving (Eq, Show, Bounded, Enum)
+                 deriving (Eq, Show, Read, Bounded, Enum, Ord)
 
 data GameState =
    -- implementation-necessary
