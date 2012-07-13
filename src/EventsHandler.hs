@@ -36,6 +36,7 @@ handleEvents' Menu event            = menuEvents event
 handleEvents' NewGame01 event       = newGame01Events event
 handleEvents' NewGame02 event       = newGame02Events event
 handleEvents' NewGame03 event       = newGame03Events event
+handleEvents' (Exploring mapName (x,y)) event = exploringEvents mapName (x,y) event
 handleEvents' MenuSettings event    = menuSettingsEvents event
 handleEvents' _ _                   = error "events not detected"
 
@@ -46,7 +47,20 @@ setNextState :: GameState -> AppEnv ()
 setNextState gs = do
   -- Checks if the user has not already asked for exit
   currentNextState <- getNextState
-  when (currentNextState /= Bye) (putNextState gs)
+  when (currentNextState /= Bye) (setNextState' gs)
+  
+
+
+-- Actual function to set state (called after verification of wanna quit)
+setNextState' :: GameState -> AppEnv ()
+setNextState' gs@(Exploring mapName (x, y)) = do
+  -- Sets the gIO accordingly
+  -- map name is hardcoded -> to FIX (possibility of several maps: JOHTO, KANTO...)
+  let io    = if (mapName == "breizh") then Outside else Inside
+  (Just gd) <- getGameData
+  putGameData (Just gd{ gIO = io, gPos = (x,y) })
+  putNextState gs
+setNextState' gs = putNextState gs
 
 
 
@@ -160,7 +174,7 @@ newGame02Events _ = return ()
 ***********************************************************************
 -}
 newGame03Events :: Event -> AppEnv ()
-newGame03Events (KeyDown (Keysym SDLK_RETURN [] _)) = setNextState (Menu)
+newGame03Events (KeyDown (Keysym SDLK_RETURN [] _)) = setNextState (Exploring "breizh" (1, 5))
 newGame03Events _ = return ()
 
 
@@ -173,3 +187,14 @@ newGame03Events _ = return ()
 menuSettingsEvents :: Event -> AppEnv ()
 menuSettingsEvents (KeyDown (Keysym SDLK_ESCAPE [] _)) = setNextState Menu
 menuSettingsEvents _ = return ()
+
+
+
+{-
+***********************************************************************
+*            Exploring Events
+***********************************************************************
+-}
+exploringEvents :: String -> (Int, Int) -> Event -> AppEnv ()
+exploringEvents mapName (x, y) (KeyDown (Keysym SDLK_RETURN [] _)) = setNextState Menu
+exploringEvents _ _ _ = return ()

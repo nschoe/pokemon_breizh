@@ -2,14 +2,15 @@ module Rendering (
                   rendering
                   ) where
 
-import Control.Monad (liftM)
+import Control.Monad (liftM, forM_)
 import Control.Monad.IO.Class (liftIO)
 
 import Data.Array ((!))
 import Data.Map (Map)
+import Data.Maybe (fromMaybe)
 import qualified Data.Map as Map
 
-import Graphics.UI.SDL (fillRect, getClipRect, surfaceGetPixelFormat, mapRGB)
+import Graphics.UI.SDL (fillRect, getClipRect, surfaceGetPixelFormat, mapRGB, Rect(..))
 import Graphics.UI.SDL.Color (Color(..))
 import qualified Graphics.UI.SDL.TTF.General as TTFG
 import Graphics.UI.SDL.TTF.Management
@@ -17,8 +18,10 @@ import Graphics.UI.SDL.TTF.Render
 
 import System.FilePath ((</>))
 
-import Types
+import Config(clips)
 import Helper
+import Pokemap(World(..))
+import Types
 import Settings
 
 -- Main rendering function, makes appropriate calls to rendering functions
@@ -30,9 +33,67 @@ rendering NewGame01           = newGame01Rendering
 rendering NewGame02           = newGame02Rendering
 rendering NewGame03           = newGame03Rendering
 rendering MenuSettings        = menuSettingsRendering
+rendering (Exploring mapName (x,y)) = exploringRendering mapName (x,y)
 rendering _                   = return ()
 
 
+
+-- Function to display the map on the screen
+-- drawMap assumes the Game Data is filled in (Nothing will fail)
+drawMap :: AppEnv ()
+drawMap = do
+  -- Knows if we have to draw the inside or current map
+  mapIO <- liftM (gIO . (fromMaybe (error "calling drawMap while Game Data not set!"))) getGameData
+   
+  world@World{ wField = field, wDim = (width, height) } <- case mapIO of 
+    Outside -> getCurrentWorld
+    Inside  -> liftM (fromMaybe (error "drawMap called, with Inside set and no Inside map loaded")) getInsideWorld
+    
+  -- Gets other resources
+  camera@(Rect cx cy cw ch) <- getCamera
+  screen                    <- getScreen
+  spriteSheet               <- getSpriteSheet
+  
+  -- Creates a list of the visible tiles
+  let topLeftX     = ptt cx
+      topLeftY     = ptt cy
+      bottomRightX = ptt (cx + cw)
+      bottomRightY = ptt (cy + ch)
+      visibleTiles = [(i,j) | i <- [topLeftX..bottomRightX-1], j <- [topLeftY..bottomRightY-1]]
+
+
+  -- Blits them
+  liftIO $ forM_ visibleTiles $ \(i,j) -> do
+    let (x,y) = (ttp i - cx, ttp j - cy)
+        clip  = clips ! (field ! (j,i))
+    applySurface x y spriteSheet screen (Just clip)
+
+
+
+-- Displays the character, with the right sprite, at the right position
+drawCharacter :: AppEnv ()
+drawCharacter = do
+  -- Gets the character's position and direction
+  (Just gd)  <- getGameData
+  let (x, y) = gPos gd 
+      dir    = gDir gd
+  
+  -- Gets resources
+  playerSprites      <- getPlayerSprites
+  playerClips        <- getPlayerClips
+  (Rect cx cy cw ch) <- getCamera 
+  let clip        = Map.lookup dir playerClips
+  
+  -- Computes the position for blitting
+  let xPixel = ttp x - cx
+      yPixel = ttp y - cy
+  
+  -- Blits
+  screen <- getScreen
+  liftIO $ applySurface xPixel yPixel playerSprites screen clip
+  return ()
+  
+  
 
 {-
 ***********************************************************************
@@ -198,3 +259,18 @@ menuSettingsRendering = do
     applySurface 75 190 mapMsg screen Nothing
 
   return ()
+  
+  
+  
+{-
+***********************************************************************
+*            Exploring Rendering
+***********************************************************************
+-}
+exploringRendering :: String -> (Int, Int) -> AppEnv ()
+exploringRendering mapName (x,y) = do
+  -- First: draw the map
+  drawMap
+  
+  -- Then draw the character
+  drawCharacter

@@ -33,8 +33,10 @@ module Helper (
               , getPokemonFont
               , getPlayerSprites
               , getPlayerClips
-              , getWorld
-              , putWorld
+              , getCurrentWorld
+              , putCurrentWorld
+              , getInsideWorld 
+              , putInsideWorld
               , getDim
               , getFPS
               , putFPS
@@ -211,14 +213,20 @@ getPlayerClips :: MonadReader AppResource m => m (Map Direction Rect)
 getPlayerClips = liftM resPlayerClips ask
 
 -- AppData (MonadState)
-getWorld :: MonadState AppData m => m World
-getWorld = liftM appWorld get
+getCurrentWorld :: MonadState AppData m => m World
+getCurrentWorld = liftM appCurrentWorld get
 
-putWorld :: MonadState AppData m => World -> m ()
-putWorld w = modify $ \s -> s { appWorld = w }
+putCurrentWorld :: MonadState AppData m => World -> m ()
+putCurrentWorld w = modify $ \s -> s { appCurrentWorld = w }
+
+getInsideWorld :: MonadState AppData m => m (Maybe World)
+getInsideWorld = liftM appInsideWorld get
+
+putInsideWorld :: MonadState AppData m => Maybe World -> m ()
+putInsideWorld w = modify $ \s -> s { appInsideWorld = w }
 
 getDim :: MonadState AppData m => m (Int, Int)
-getDim = liftM (wDim . appWorld) get
+getDim = liftM (wDim . appCurrentWorld) get
 
 getFPS :: MonadState AppData m => m Timer
 getFPS = liftM appFps get

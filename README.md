@@ -4,7 +4,6 @@ PoKemon Breizh
 PoKemon-like Haskell implemented game, base on SDL.
 
 TODO :
-  * consider the possibility of two appStates : one for the application
-    state (camera, game state, timer for cappin frames (fps)) and one for
-    the game (player, pokemon team, ...) instead of using Maybe values
-    (c.f. Maybe Player)
+  * Move the two World variables to the GameData instance (this way, the World doesn't get loaded in the menu...)
+  * In EventsHandler.hs, fix teh hard-coded map name, in function setNextState' (on pattern matching Exploring)
+  * Create getters on GameData instead of using the pattern matching functions (for instance, create a getPos, rather than using gPos on a GameData)

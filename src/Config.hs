@@ -18,6 +18,7 @@ module Config (
               , nbOfTiles
               , iMax
               , jMax
+              , startingPosition 
               ) where
 
 import Data.Array
@@ -48,6 +49,10 @@ iMax, jMax, nbOfTiles :: Int
 iMax        = 19
 jMax        = 15
 nbOfTiles   = 319
+
+-- Defined in tiles
+startingPosition :: (Int, Int)
+startingPosition = (37, 47)
 
 -- Huge array used to clip sprites from the sprite sheet
 clips :: Array Word16 Rect --Alist

@@ -22,6 +22,7 @@ module Types (
              , Inventory(..)
              , Badge(..)
              , Team(..) 
+             , Where(..)
              ) where
 
 import Control.Monad.Reader
@@ -85,7 +86,8 @@ data AppResource = AppResource {
 
 -- State of the application
 data AppData = AppData {
-      appWorld        :: World
+      appCurrentWorld :: World     -- the world we play on
+    , appInsideWorld  :: Maybe World -- stores the map on the inside of a building 
     , appFps          :: Timer     -- to cap frame rate
     , appCamera       :: Camera    -- our field of vision
     , appMenuSelector :: (Int,Int) -- (pos, maxValue) of our menu selector
@@ -103,7 +105,12 @@ data GameData = GameData {
     , gPos             :: (Int, Int) -- (x, y) player position on the map (in tiles)
     , gDir             :: Direction  -- to know what tile to display
     , gClock           :: Integer    -- Stores the timestamp when the charatcers started playing.
+    , gIO              :: Where      -- Tells if we must display the Inside or Outside world 
     } deriving (Show, Read)
+               
+-- Type to tell the drawing function to draw either the inside or outside map
+data Where = Inside | Outside
+           deriving   (Eq, Show, Read)
 
 -- Pokemon player''s info
 data Player = Player {
@@ -202,7 +209,7 @@ data GameState =
  | Bye
 
    -- most common, "normal" game state: character moving in the wild!
- | Exploring
+ | Exploring String (Int, Int)
 
    deriving (Eq, Show)
 

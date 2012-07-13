@@ -66,6 +66,7 @@ initEnv mapFile = do
                                                                  , (WalkingRight, (633, 316, 48, 48))
                                                                   ]
       plClips    = fromList plClpsList
+      insideWorld = Nothing
 
   -- builds the appResource
       res       = AppResource {
@@ -82,7 +83,7 @@ initEnv mapFile = do
   
   -- builds the appData
       dat       = AppData {
-                    appWorld          = world
+                    appCurrentWorld   = world
                   , appFps            = fps
                   , appCamera         = camera
                   , appNewGameBgs     = newGameBgs
@@ -90,6 +91,7 @@ initEnv mapFile = do
                   , appCurrentState   = currentSt
                   , appNextState      = nextSt
                   , appGameData       = gameData
+                  , appInsideWorld    = insideWorld                     
                   }
 
   -- Finally returns them (this form makes it easier to handle when updating the appResource and appData types)
