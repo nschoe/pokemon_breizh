@@ -52,7 +52,7 @@ nbOfTiles   = 319
 
 -- Defined in tiles
 startingPosition :: (Int, Int)
-startingPosition = (37, 47)
+startingPosition = (80, 355)
 
 -- Huge array used to clip sprites from the sprite sheet
 clips :: Array Word16 Rect --Alist

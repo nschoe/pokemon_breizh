@@ -23,7 +23,7 @@ module Helper (
               , fmn
               , serializeGameData
               , parseGameData
-              , showPlayer
+              , moveCharacter 
               , getScreen
               , getSpriteSheet
               , getIntroBg
@@ -61,6 +61,7 @@ import Control.Monad.Reader
 import Data.Array (Array(..), (!))
 import Data.Map (Map)
 import qualified Data.Map as Map ((!))
+import Data.Maybe (fromMaybe)
 import Data.Word (Word16)
 
 import Graphics.UI.SDL as SDL
@@ -164,22 +165,32 @@ parseGameData = return . read
 
 
 
--- Saves key typping in displaying the character.
-showPlayer :: AppEnv ()
-showPlayer  = do
-  -- Gets the gameData
-  Just (gd@GameData{ gPos = (x, y), gDir = dir  }) <- getGameData
-  c@(Rect cx cy cw ch) <- getCamera
-
-  -- Gets the player sprite sheet, to know what sprite to display
-  playerSprite <- getPlayerSprites
-  clip         <- liftM (Map.! dir) getPlayerClips
-
-  -- Blits
-  screen       <- getScreen
-  liftIO $ applySurface (ttp x - cx) (ttp y - cy) playerSprite screen (Just clip)
-
-  return ()
+-- Checks if the character can access the asked tile, and move it
+moveCharacter :: MoveDir -> AppEnv ()
+moveCharacter moveDir = do
+  -- Gets GameData and position and world dimension
+  (Just gd)                             <- getGameData
+  mapIO                                 <- liftM (gIO . (fromMaybe (error "calling movePlayer while Game Data not set!"))) getGameData
+   
+  world@World{ wDim = (lvlW, lvlH) } <- case mapIO of 
+    Outside -> getCurrentWorld
+    Inside  -> liftM (fromMaybe (error "movePlayer called, with Inside set and no Inside map loaded")) getInsideWorld
+  let (x, y) = gPos gd
+  
+  -- Computes new position
+      (x', y') = case moveDir of
+        MoveUp    -> (x, y-1)
+        MoveDown  -> (x, y+1)
+        MoveLeft  -> (x-1, y)
+        MoveRight -> (x+1, y)
+  
+  -- Checks if accessed square is authorized
+  -- should check on list of forbidden tiles...
+      x'' = if x' < 0 || x' > lvlW then x else x'
+      y'' = if y' < 0 || y' > lvlH then y else y'
+  
+  -- Actually moves the player
+  putGameData (Just gd{ gPos = (x'', y'') })  
 
 
 

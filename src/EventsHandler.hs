@@ -196,5 +196,40 @@ menuSettingsEvents _ = return ()
 ***********************************************************************
 -}
 exploringEvents :: String -> (Int, Int) -> Event -> AppEnv ()
-exploringEvents mapName (x, y) (KeyDown (Keysym SDLK_RETURN [] _)) = setNextState Menu
+
+--  Moves character up
+exploringEvents mapName (x, y) (KeyDown (Keysym SDLK_UP [] _)) = do
+  -- Moves the character up
+  moveCharacter MoveUp
+  
+  -- Sets the new sprite
+  (Just gd) <- getGameData
+  putGameData (Just gd{ gDir = StopUp })
+  
+--  Moves character down
+exploringEvents mapName (x, y) (KeyDown (Keysym SDLK_DOWN [] _)) = do
+  -- Moves the character down
+  moveCharacter MoveDown
+  
+  -- Sets the new sprite
+  (Just gd) <- getGameData
+  putGameData (Just gd{ gDir = StopDown })  
+  
+--  Moves character left
+exploringEvents mapName (x, y) (KeyDown (Keysym SDLK_LEFT [] _)) = do
+  -- Moves the character left
+  moveCharacter MoveLeft
+  
+  -- Sets the new sprite
+  (Just gd) <- getGameData
+  putGameData (Just gd{ gDir = StopLeft })  
+  
+--  Moves character right
+exploringEvents mapName (x, y) (KeyDown (Keysym SDLK_RIGHT [] _)) = do
+  -- Moves the character right
+  moveCharacter MoveRight
+  
+  -- Sets the new sprite
+  (Just gd) <- getGameData
+  putGameData (Just gd{ gDir = StopRight })  
 exploringEvents _ _ _ = return ()

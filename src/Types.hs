@@ -23,6 +23,7 @@ module Types (
              , Badge(..)
              , Team(..) 
              , Where(..)
+             , MoveDir(..) 
              ) where
 
 import Control.Monad.Reader
@@ -179,6 +180,10 @@ data Direction =
                | WalkingLeft
                | WalkingRight
                  deriving (Eq, Show, Read, Bounded, Enum, Ord)
+                          
+-- Basic Enum type used in moveCharacter, to know what direction the player wants to go
+data MoveDir = MoveUp | MoveDown | MoveLeft | MoveRight
+             deriving (Eq, Show, Read)
 
 data GameState =
    -- implementation-necessary
