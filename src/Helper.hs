@@ -18,6 +18,8 @@ module Helper (
               , save
               , fonts
               , settings
+              , forbidden  
+              , getForbidden  
               , ttp
               , ptt
               , fmn
@@ -62,6 +64,7 @@ import Control.Monad.State
 import Control.Monad.Reader
 
 import Data.Array (Array(..), (!))
+import Data.List (nub)
 import Data.Map (Map)
 import qualified Data.Map as Map ((!))
 import Data.Maybe (fromMaybe)
@@ -135,6 +138,25 @@ settings = root </> ".settings"
 
 
 
+-- Path to the forbidden tile list file
+forbidden :: FilePath
+forbidden = root </> ".forbidden"
+
+
+
+-- Returns the list of all forbidden tiles
+getForbidden :: IO [Word16]
+getForbidden = do
+  -- Reads the file
+  rawContents <- liftIO $ readFile forbidden
+  
+  -- Get the list of Word16
+  let separated = words rawContents
+      converted = (map read separated) :: [Word16]
+  return converted
+
+
+
 -- Converts dimension from tiles to pixels
 -- TileToPixels
 ttp :: Int -> Pixels
@@ -199,9 +221,11 @@ moveCharacter moveDir = do
   (Just gd)                             <- getGameData
   mapIO                                 <- liftM (gIO . (fromMaybe (error "calling movePlayer while Game Data not set!"))) getGameData
    
-  world@World{ wDim = (lvlW, lvlH) } <- case mapIO of 
+  world@World{ wField = field, wDim = (lvlW, lvlH) } <- case mapIO of 
     Outside -> getCurrentWorld
     Inside  -> liftM (fromMaybe (error "movePlayer called, with Inside set and no Inside map loaded")) getInsideWorld
+  forbiddenTiles <- liftIO $ getForbidden
+  
   let (x, y) = gPos gd
   
   -- Computes new position
@@ -215,9 +239,14 @@ moveCharacter moveDir = do
   -- should check on list of forbidden tiles...
       x'' = if x' < 0 || x' > lvlW then x else x'
       y'' = if y' < 0 || y' > lvlH then y else y'
+      
+      nextTileType = field ! (y'', x'')
+      (nextX, nextY) = case nextTileType `elem` forbiddenTiles of
+        False -> (x'', y'')
+        True  -> (x, y)
   
   -- Actually moves the player
-  putGameData (Just gd{ gPos = (x'', y'') })  
+  putGameData (Just gd{ gPos = (nextX, nextY) })  
 
 
 
