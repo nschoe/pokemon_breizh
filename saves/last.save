@@ -1,0 +1,1 @@
+GameData {gPlayer = Player {plName = "nschoe", plTeam = Nothing, plInventory = Inventory {iSize = 1, iItems = [Item {itName = "Argent", itDesc = "Sert a acheter les objets utiles a vos PoKemon !"}]}, plBadges = []}, gLove = "Sophie", gPos = (97,334), gDir = StopDown, gClock = 1342252242, gIO = Outside}

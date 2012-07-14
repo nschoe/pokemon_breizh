@@ -67,6 +67,7 @@ initEnv mapFile = do
                                                                   ]
       plClips    = fromList plClpsList
       insideWorld = Nothing
+      saveFile    = save </> "last.save"
 
   -- builds the appResource
       res       = AppResource {
@@ -79,6 +80,7 @@ initEnv mapFile = do
                   , resPlayerSprites  = playerSprites
                   , resPlayerClips    = plClips
                   , resPokemonFont    = pokemonFont
+                  , resSaveFile       = saveFile                      
                   }
   
   -- builds the appData

@@ -23,6 +23,8 @@ module Helper (
               , fmn
               , serializeGameData
               , parseGameData
+              , saveGame 
+              , loadGame  
               , moveCharacter 
               , getScreen
               , getSpriteSheet
@@ -31,6 +33,7 @@ module Helper (
               , getMenuBg
               , getMenuArrow
               , getPokemonFont
+              , getSaveFile
               , getPlayerSprites
               , getPlayerClips
               , getCurrentWorld
@@ -161,7 +164,31 @@ serializeGameData = show
 
 -- Reads a save file and returns the associated GameData
 parseGameData :: FilePath -> IO GameData
-parseGameData = return . read
+parseGameData saveFile = do
+  contents <- readFile saveFile
+  return (read contents)
+
+
+-- Saves the game in the save file
+saveGame :: AppEnv ()
+saveGame = do
+  saveFile <- getSaveFile
+  (Just gd) <- getGameData
+  liftIO $ writeFile saveFile (serializeGameData gd)
+  
+  
+  
+-- Loads the game from the save file  
+loadGame :: AppEnv ()
+loadGame = do
+  -- Gets the save file
+  saveFile <- getSaveFile
+  
+  -- Reads the game data from the file
+  gd <- liftIO $ parseGameData saveFile
+
+  -- Attaches the newly-loaded game data in the global state
+  putGameData (Just gd)
 
 
 
@@ -222,6 +249,9 @@ getPlayerSprites = liftM resPlayerSprites ask
 
 getPlayerClips :: MonadReader AppResource m => m (Map Direction Rect)
 getPlayerClips = liftM resPlayerClips ask
+
+getSaveFile :: MonadReader AppResource m => m FilePath
+getSaveFile = liftM resSaveFile ask
 
 -- AppData (MonadState)
 getCurrentWorld :: MonadState AppData m => m World

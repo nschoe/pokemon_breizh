@@ -8,6 +8,9 @@ import Control.Monad.IO.Class (liftIO)
 
 import Graphics.UI.SDL as SDL
 
+import System.Directory (doesFileExist)
+import System.IO (openFile, IOMode(..), hFileSize)
+
 import Helper
 import Types
 
@@ -132,6 +135,31 @@ menuEvents (KeyDown (Keysym SDLK_RETURN [] _)) = do
   -- Gets the arrow position
   pos <- liftM fst getMenuSelector
   
+  -- When pointing to Continue
+  when (pos == 0) $ do
+    -- Checks if the save file exists and is not empty
+    saveFile <- getSaveFile
+    exists   <- liftIO $ doesFileExist saveFile 
+    size     <- case exists of
+      False -> return 0
+      True  -> do
+        h <- liftIO $ openFile saveFile ReadMode
+        liftIO $ hFileSize h
+    
+    
+    -- Actually loads the save game when it exists
+    let proceed = size > 0
+    when proceed $ do
+      loadGame
+      (Just gd) <- getGameData
+      let (x,y) = gPos gd
+    
+      -- Starts the game
+      -- ATTENTION: only possible to save the game OUTSIDE for the moment
+      setNextState (Exploring "breizh" (x, y))
+    
+        
+    
   -- When pointing to NewGame
   when (pos == 1) (setNextState NewGame01)
 
@@ -232,4 +260,8 @@ exploringEvents mapName (x, y) (KeyDown (Keysym SDLK_RIGHT [] _)) = do
   -- Sets the new sprite
   (Just gd) <- getGameData
   putGameData (Just gd{ gDir = StopRight })  
+  
+-- Temporary: saves the game  
+exploringEvents _ _ (KeyDown (Keysym SDLK_s [KeyModLeftCtrl] _)) = saveGame
+
 exploringEvents _ _ _ = return ()

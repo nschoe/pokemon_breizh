@@ -83,6 +83,7 @@ data AppResource = AppResource {
     , resPlayerSprites :: Surface -- the global player sprite sheet
     , resPlayerClips   :: Map Direction Rect -- main player's clips
     , resPokemonFont   :: Font    -- Pokemon GB font
+    , resSaveFile      :: FilePath -- file which contains the save game 
     } deriving (Show)
 
 -- State of the application
