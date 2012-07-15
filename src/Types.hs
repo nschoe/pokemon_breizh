@@ -76,6 +76,8 @@ type AppEnv   = ReaderT AppResource AppState
 data AppResource = AppResource {
       resScreen        :: Surface -- the screen to blit on
     , resIntroBg       :: Surface -- Introduction screen background
+    , resInGameMenuSprite :: Surface -- The in game menu  
+    , resInGameArrowSprite :: Surface -- the in game arrow  
     , resCreditsBg     :: Surface -- Credits screen background
     , resMenuArrow     :: Surface -- The little arrow used to select menu
     , resMenuBg        :: Surface -- menu background, with selection options
@@ -216,6 +218,9 @@ data GameState =
 
    -- most common, "normal" game state: character moving in the wild!
  | Exploring String (Int, Int)
+   
+   -- shows the menu when in game
+ | InGameMenu
 
    deriving (Eq, Show)
 

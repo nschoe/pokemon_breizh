@@ -34,6 +34,8 @@ module Helper (
               , getCreditsBg
               , getMenuBg
               , getMenuArrow
+              , getInGameMenuSprite  
+              , getInGameArrowSprite  
               , getPokemonFont
               , getSaveFile
               , getPlayerSprites
@@ -269,6 +271,12 @@ getMenuBg = liftM resMenuBg ask
 
 getMenuArrow :: MonadReader AppResource m => m Surface
 getMenuArrow = liftM resMenuArrow ask
+
+getInGameMenuSprite :: MonadReader AppResource m => m Surface
+getInGameMenuSprite = liftM resInGameMenuSprite ask
+
+getInGameArrowSprite :: MonadReader AppResource m => m Surface
+getInGameArrowSprite = liftM resInGameArrowSprite ask
 
 getPokemonFont :: MonadReader AppResource m => m Font
 getPokemonFont = liftM resPokemonFont ask

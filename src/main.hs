@@ -38,8 +38,10 @@ initEnv mapFile = do
   introBg       <- loadImage (img </> "intro_bg.png")
   creditsBg     <- loadImage (img </> "credits_bg.png")
   menuArrow     <- loadImage (img </> "menu_arrow.png")
+  inGameArrow   <- loadImage (img </> "in_game_arrow.png")
   menuBg        <- loadImage (img </> "menu_bg.png")
   spriteSheet   <- loadImage (img </> "sprite_sheet.png")
+  inGameMenuSpr <- loadImage (img </> "in_game_menu.png")
   playerSprites <- loadImage (img </> "player_sprites.png")
   newGame01     <- loadImage (img </> "new_game_01.png")
   newGame02     <- loadImage (img </> "new_game_02.png")
@@ -75,6 +77,8 @@ initEnv mapFile = do
                   , resIntroBg        = introBg
                   , resCreditsBg      = creditsBg
                   , resMenuArrow      = menuArrow
+                  , resInGameMenuSprite = inGameMenuSpr                  
+                  , resInGameArrowSprite = inGameArrow                  
                   , resMenuBg         = menuBg
                   , resSpriteSheet    = spriteSheet
                   , resPlayerSprites  = playerSprites

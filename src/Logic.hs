@@ -12,7 +12,7 @@ import Data.Time.Clock.POSIX
 import Graphics.UI.SDL (Rect(..))
 
 import Config (tileDim, startingPosition)
-import Helper (settings, getGameData, putGameData, putCamera, getCamera, ttp, getInsideWorld, getCurrentWorld)
+import Helper (settings, getGameData, putGameData, putCamera, getCamera, ttp, getInsideWorld, getCurrentWorld, putMenuSelector, getMenuSelector)
 import Pokemap (World(..))
 import Settings
 import Types
@@ -27,6 +27,7 @@ performLogic NewGame02       = newGame02Logic
 performLogic NewGame03       = newGame03Logic
 performLogic MenuSettings    = menuSettingsLogic
 performLogic (Exploring mapName (x,y)) = exploringLogic mapName (x,y)
+performLogic InGameMenu      = inGameMenuLogic
 performLogic _               = error "logic not handled!"
 
 
@@ -117,7 +118,7 @@ newGame02Logic = return ()
 -}
 newGame03Logic :: AppEnv ()
 newGame03Logic = do
-  -- Parse the settings file, to get the name and the map
+  -- Parses the settings file, to get the name and the map
   sets        <- liftIO $ parseSettings settings
 
   time        <- liftIO $ getPOSIXTime
@@ -146,6 +147,9 @@ newGame03Logic = do
                     , gIO     = iO            
                     }
   putGameData (Just gameData)
+  
+  -- Sets new position/bound for the menu selector
+  putMenuSelector (0, 6) -- initial position set to 0, 7 entries in the menu
 
 {-
 ***********************************************************************
@@ -166,3 +170,13 @@ exploringLogic :: String -> (Int, Int) -> AppEnv ()
 exploringLogic mapName (x,y) = do
   -- Centers the camera onto the character
   centerCamera
+  
+  
+  
+{-
+***********************************************************************
+*            In game menu Logic
+***********************************************************************
+-}
+inGameMenuLogic :: AppEnv ()
+inGameMenuLogic = return ()

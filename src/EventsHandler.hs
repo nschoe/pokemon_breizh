@@ -41,6 +41,7 @@ handleEvents' NewGame02 event       = newGame02Events event
 handleEvents' NewGame03 event       = newGame03Events event
 handleEvents' (Exploring mapName (x,y)) event = exploringEvents mapName (x,y) event
 handleEvents' MenuSettings event    = menuSettingsEvents event
+handleEvents' InGameMenu event      = inGameMenuEvents event
 handleEvents' _ _                   = error "events not detected"
 
 
@@ -261,7 +262,65 @@ exploringEvents mapName (x, y) (KeyDown (Keysym SDLK_RIGHT [] _)) = do
   (Just gd) <- getGameData
   putGameData (Just gd{ gDir = StopRight })  
   
--- Temporary: saves the game  
-exploringEvents _ _ (KeyDown (Keysym SDLK_s [KeyModLeftCtrl] _)) = saveGame
+-- Start press: displays in game menu
+exploringEvents _ _ (KeyDown (Keysym SDLK_RETURN [] _)) = do
+  (pos, _) <- getMenuSelector
+  putMenuSelector (pos, 6)
+  setNextState InGameMenu
 
 exploringEvents _ _ _ = return ()
+
+
+
+{-
+***********************************************************************
+*            In game menu Events
+***********************************************************************
+-}
+inGameMenuEvents :: Event -> AppEnv ()
+-- Attention: menu only works OUTSIDE
+
+-- Pops the in game menu
+inGameMenuEvents (KeyDown (Keysym SDLK_RETURN [] _)) = do
+  (Just gd) <- getGameData
+  let (x,y) = gPos gd
+  setNextState (Exploring "breizh" (x,y))
+inGameMenuEvents (KeyDown (Keysym SDLK_x [] _)) = do
+  (Just gd) <- getGameData
+  let (x,y) = gPos gd
+  setNextState (Exploring "breizh" (x,y))
+  
+-- Moving the arrow UP
+inGameMenuEvents (KeyDown (Keysym SDLK_UP [] _)) = do
+  (pos, maxi) <- getMenuSelector
+  let pos' = if pos == 0 then
+               maxi
+             else  
+               pred pos
+  putMenuSelector (pos', maxi)
+
+-- Moving the arrow DOWN  
+inGameMenuEvents (KeyDown (Keysym SDLK_DOWN [] _)) = do
+  (pos, maxi) <- getMenuSelector
+  let pos' = if pos == maxi then        
+               0 
+             else
+               succ pos
+  putMenuSelector (pos', maxi)  
+
+-- Handles C press
+inGameMenuEvents (KeyDown (Keysym SDLK_c [] _)) = do
+  (pos, _)  <- getMenuSelector
+  (Just gd) <- getGameData
+  let (x,y)   = gPos gd
+  
+  -- Saves game
+  when (pos == 5) $ do
+    saveGame
+    setNextState (Exploring "breizh" (x,y))
+  
+  -- Quits game
+  when (pos == 6) $ do 
+    putMenuSelector (0, 3)
+    setNextState Menu
+inGameMenuEvents _ = return ()

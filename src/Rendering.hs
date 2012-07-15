@@ -34,6 +34,7 @@ rendering NewGame02           = newGame02Rendering
 rendering NewGame03           = newGame03Rendering
 rendering MenuSettings        = menuSettingsRendering
 rendering (Exploring mapName (x,y)) = exploringRendering mapName (x,y)
+rendering InGameMenu          = inGameMenuRendering
 rendering _                   = return ()
 
 
@@ -274,3 +275,30 @@ exploringRendering mapName (x,y) = do
   
   -- Then draw the character
   drawCharacter
+  
+  
+  
+{-
+***********************************************************************
+*            In game menu Rendering
+***********************************************************************
+-}
+inGameMenuRendering :: AppEnv ()
+inGameMenuRendering = do
+  -- Gets the in game menu sprite and the arrow
+  menuSprite  <- getInGameMenuSprite
+  arrowSprite <- getInGameArrowSprite
+  (pos, maxi) <- getMenuSelector
+  
+  --Gets the screen
+  screen <- getScreen
+  
+  -- Blits the menu
+  liftIO $ applySurface 568 0 menuSprite screen Nothing
+  
+  -- Blits the selector
+  let x = 568
+      y = 52 + pos*95
+  liftIO $ applySurface x y arrowSprite screen Nothing
+  
+  return ()
