@@ -80,7 +80,7 @@ import Graphics.UI.SDL.TTF.Types (Font)
 
 import System.FilePath (FilePath, (</>))
 
-import Config (tileDim, clips)
+import Config (tileDim, clips, sWidth, sHeight)
 import Pokemap (World(..))
 import Timer (Timer(..))
 import Types
@@ -198,9 +198,23 @@ parseGameData saveFile = do
 -- Saves the game in the save file
 saveGame :: AppEnv ()
 saveGame = do
+  -- Gets the saving file
   saveFile <- getSaveFile
+  
+  -- Gets the game data to serialize
   (Just gd) <- getGameData
+  
+  -- Serializes and writes the game data on file
   liftIO $ writeFile saveFile (serializeGameData gd)
+  
+  -- Displays a message on screen
+  screen   <- getScreen
+  msg      <- liftIO $ loadImage (img </> "saved.png")
+  let width  = surfaceGetWidth msg
+      height = surfaceGetHeight msg
+  liftIO $ applySurface ((sWidth - width) `div` 2) ((sHeight - height) `div` 2) msg screen Nothing
+  liftIO $ SDL.flip screen
+  liftIO $ SDL.delay 1500
   
   
   
@@ -223,11 +237,13 @@ loadGame = do
 drawMap :: AppEnv ()
 drawMap = do
   -- Knows if we have to draw the inside or current map
-  mapIO <- liftM (gIO . (fromMaybe (error "calling drawMap while Game Data not set!"))) getGameData
+  (Just gd)    <- getGameData
+  let mapIO     = gIO gd
    
   world@World{ wField = field, wDim = (width, height) } <- case mapIO of 
     Outside -> getCurrentWorld
-    Inside  -> liftM (fromMaybe (error "drawMap called, with Inside set and no Inside map loaded")) getInsideWorld
+    Inside  -> getInsideWorld >>= \(Just insideWorld) -> return insideWorld
+--    Inside  -> liftM (fromMaybe (error "drawMap called, with Inside set and no Inside map loaded")) getInsideWorld
     
   -- Gets other resources
   camera@(Rect cx cy cw ch) <- getCamera
@@ -257,10 +273,13 @@ centerCamera (x, y) = do
   camera@(Rect cx cy cw ch) <- getCamera
   
   -- Guesses which maps to load, and reads its dimension
-  mapIO    <- liftM (gIO . (fromMaybe (error "calling centerCamera where game data not initialized!"))) getGameData
+  (Just gd) <- getGameData
+  let mapIO = gIO gd
+      
   world@World{ wDim = (lvlW, lvlH) } <- case mapIO of
     Outside -> getCurrentWorld
-    Inside  -> liftM (fromMaybe (error "centerCamera called with Inside set and no inside map loaded!")) getInsideWorld
+    Inside  -> getInsideWorld >>= \(Just insideWorld) -> return insideWorld
+--    Inside  -> liftM (fromMaybe (error "centerCamera called with Inside set and no inside map loaded!")) getInsideWorld
 
   -- Computes new position
   -- Problem: for now, the field is 16*16, or 16 is even.
@@ -279,12 +298,13 @@ centerCamera (x, y) = do
 moveCharacter :: MoveDir -> AppEnv ()
 moveCharacter moveDir = do
   -- Gets GameData and position and world dimension
-  (Just gd)                             <- getGameData
-  mapIO                                 <- liftM (gIO . (fromMaybe (error "calling movePlayer while Game Data not set!"))) getGameData
+  (Just gd)  <- getGameData
+  let mapIO   = gIO gd
    
   world@World{ wField = field, wDim = (lvlW, lvlH) } <- case mapIO of 
     Outside -> getCurrentWorld
-    Inside  -> liftM (fromMaybe (error "movePlayer called, with Inside set and no Inside map loaded")) getInsideWorld
+    Inside  -> getInsideWorld >>= \(Just insideWorld) -> return insideWorld
+--    Inside  -> liftM (fromMaybe (error "movePlayer called, with Inside set and no Inside map loaded")) getInsideWorld
   forbiddenTiles <- liftIO $ getForbidden
   
   let (x, y) = gPos gd
@@ -328,9 +348,6 @@ animatedWalking moveDir = do
         MoveLeft   -> [(toX,y) | toX <- [x,x-4..x-tileDim]]
         MoveRight  -> [(toX,y) | toX <- [x,x+4..x+tileDim]]
   
-  -- Shifts position with respect to the camera
-      shiftedPositions = map (\(x', y') -> (x'-cx,y'-cy)) positions
-  
       spriteDir    = case moveDir of
           MoveUp     -> if even (ptt x + ptt y) then WalkingUp else WalkingUp'
           MoveDown   -> if even (ptt x + ptt y) then WalkingDown else WalkingDown'
@@ -338,6 +355,7 @@ animatedWalking moveDir = do
           MoveRight  -> if even (ptt x + ptt y) then WalkingRight else WalkingRight'  
       
       clip         = Map.lookup spriteDir playerClips
+  
   forM_ positions $ \(pX, pY) -> do
     centerCamera (pX, pY)
     (Rect cx cy   _ _) <- getCamera
@@ -348,39 +366,8 @@ animatedWalking moveDir = do
 
   -- Updates positions
   putGameData (Just gd{ gPos = (last positions) })
-  
--- Animates the walking process from the start position to the target position
-  {-
-animatedWalking :: (Int, Int) -> (Int,  Int) -> MoveDir -> AppEnv ()
-animatedWalking (fromX, fromY) (toX, toY) dir = do
-  -- Computes new positions (to intermediate displaying)
-  let positions = case dir of
-        MoveUp    -> [(fromX, y) | y <- [fromY,fromY-1..toY]]
-        MoveDown  -> [(fromX, y) | y <- [fromY..toY]]
-        MoveLeft  -> [(x, fromY) | x <- [fromX,fromX-1..toX]]
-        MoveRight -> [(x, fromY) | x <- [fromX..toX]]
-        
-  -- Gets resources
-  playerSprites     <- getPlayerSprites
-  playerClips       <- getPlayerClips
-  (Just gd)         <- getGameData
-  screen            <- getScreen
-  (Rect cx cy _ _)  <- getCamera
-  let spriteDir     = gDir gd
-      clip          = Map.lookup spriteDir playerClips
-      displayPos    = map (\(x,y) -> (x-cx, y-cy)) positions
-        
-  -- Blits all intermediate positions
-  forM_ displayPos $ \(x,y) -> do
-    centerCamera (x,y) 
-    drawMap
-    liftIO $ applySurface x y playerSprites screen clip
-    liftIO $ SDL.flip screen
-    liftIO $ SDL.delay 5
-  
-  -- Updates final position
-  putGameData (Just gd{ gPos = (toX, toY) })
--}
+
+
 
 -- Accessor functions
 -- AppResource (MonadReader)

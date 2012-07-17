@@ -144,6 +144,7 @@ data Inventory = Inventory {
 -- Not effect attached to items for now, just display
 data Item = Item {
       itName :: String
+    , itQty  :: Int
     , itDesc :: String
 } deriving (Show, Read)
 
@@ -221,7 +222,7 @@ data GameState =
  | Bye
 
    -- most common, "normal" game state: character moving in the wild!
- | Exploring String (Int, Int)
+ | Exploring Where (Int, Int) -- map and (x,y) position (in pixels)
    
    -- shows the menu when in game
  | InGameMenu

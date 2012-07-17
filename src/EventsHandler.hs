@@ -40,7 +40,7 @@ handleEvents' Menu event            = menuEvents event
 handleEvents' NewGame01 event       = newGame01Events event
 handleEvents' NewGame02 event       = newGame02Events event
 handleEvents' NewGame03 event       = newGame03Events event
-handleEvents' (Exploring mapName (x,y)) event = exploringEvents mapName (x,y) event
+handleEvents' (Exploring mapIO (x,y)) event = exploringEvents mapIO (x,y) event
 handleEvents' MenuSettings event    = menuSettingsEvents event
 handleEvents' InGameMenu event      = inGameMenuEvents event
 handleEvents' _ _                   = error "events not detected"
@@ -52,12 +52,14 @@ setNextState :: GameState -> AppEnv ()
 setNextState gs = do
   -- Checks if the user has not already asked for exit
   currentNextState <- getNextState
-  when (currentNextState /= Bye) (setNextState' gs)
+  when (currentNextState /= Bye) (putNextState gs)
   
 
-
+{-
 -- Actual function to set state (called after verification of wanna quit)
 setNextState' :: GameState -> AppEnv ()
+setNextState' gs@(Exploring io (x,y)) = do
+  
 setNextState' gs@(Exploring mapName (x, y)) = do
   -- Sets the gIO accordingly
   -- map name is hardcoded -> to FIX (possibility of several maps: JOHTO, KANTO...)
@@ -66,6 +68,7 @@ setNextState' gs@(Exploring mapName (x, y)) = do
   putGameData (Just gd{ gIO = io, gPos = (x,y) })
   centerCamera (x,y)
   putNextState gs
+-}
 setNextState' gs = putNextState gs
 
 
@@ -84,8 +87,19 @@ changeState = do
 
 -- Actual state changing function
 changeState' :: GameState -> AppEnv ()
-
-changeState' Bye = putCurrentState Bye
+changeState' gs@(Exploring io (x,y)) = do
+  -- Gets the gama data
+  (Just gd)    <- getGameData
+  
+  -- Updates the game data
+  putGameData (Just gd{ gIO = io, gPos = (x,y) })
+  
+  -- Actually changes the state
+  putCurrentState gs
+  
+  -- Centers the camera on the new position we've just went
+  centerCamera (x,y)
+  
 changeState' gs   = putCurrentState gs
 
 
@@ -150,18 +164,23 @@ menuEvents (KeyDown (Keysym SDLK_RETURN [] _)) = do
         liftIO $ hFileSize h
     
     
-    -- Actually loads the save game when it exists
+    -- Actually loads the save game when it (seems to) exist(s)
     let proceed = size > 0
     when proceed $ do
+      -- Adds the saved game data in the global state of our program
       loadGame
+      
+      -- Gets the newly-loaded game data
       (Just gd) <- getGameData
+      
+      -- Gets map and position form the newly-loaded game data to pass on
+      -- as arguments to the Exploring state
       let (x,y) = gPos gd
+          io    = gIO gd
     
       -- Starts the game
-      -- ATTENTION: only possible to save the game OUTSIDE for the moment
-      setNextState (Exploring "breizh" (x, y))
-    
-        
+      setNextState (Exploring io (x, y))
+      
     
   -- When pointing to NewGame
   when (pos == 1) (setNextState NewGame01)
@@ -205,7 +224,7 @@ newGame02Events _ = return ()
 ***********************************************************************
 -}
 newGame03Events :: Event -> AppEnv ()
-newGame03Events (KeyDown (Keysym SDLK_RETURN [] _)) = setNextState (Exploring "breizh" startingPosition)
+newGame03Events (KeyDown (Keysym SDLK_RETURN [] _)) = setNextState (Exploring Outside startingPosition)
 newGame03Events _ = return ()
 
 
@@ -226,43 +245,43 @@ menuSettingsEvents _ = return ()
 *            Exploring Events
 ***********************************************************************
 -}
-exploringEvents :: String -> (Int, Int) -> Event -> AppEnv ()
+exploringEvents :: Where -> (Int, Int) -> Event -> AppEnv ()
 
 --  Moves character up
 exploringEvents mapName (x, y) (KeyDown (Keysym SDLK_UP [] _)) = do
+  -- Moves the character up
+  moveCharacter MoveUp
+  
   -- Sets the new sprite
   (Just gd) <- getGameData
   putGameData (Just gd{ gDir = StopUp })
-  
-  -- Moves the character up
-  moveCharacter MoveUp
 
 --  Moves character down
 exploringEvents mapName (x, y) (KeyDown (Keysym SDLK_DOWN [] _)) = do
+  -- Moves the character down
+  moveCharacter MoveDown
+  
   -- Sets the new sprite
   (Just gd) <- getGameData
   putGameData (Just gd{ gDir = StopDown })  
   
-  -- Moves the character down
-  moveCharacter MoveDown
-  
 --  Moves character left
 exploringEvents mapName (x, y) (KeyDown (Keysym SDLK_LEFT [] _)) = do
+  -- Moves the character left
+  moveCharacter MoveLeft
+  
   -- Sets the new sprite
   (Just gd) <- getGameData
   putGameData (Just gd{ gDir = StopLeft })  
-  
-  -- Moves the character left
-  moveCharacter MoveLeft
     
 --  Moves character right
 exploringEvents mapName (x, y) (KeyDown (Keysym SDLK_RIGHT [] _)) = do
+  -- Moves the character right
+  moveCharacter MoveRight
+  
   -- Sets the new sprite
   (Just gd) <- getGameData
   putGameData (Just gd{ gDir = StopRight })  
-  
-  -- Moves the character right
-  moveCharacter MoveRight
 
 -- Start press: displays in game menu
 exploringEvents _ _ (KeyDown (Keysym SDLK_RETURN [] _)) = do
@@ -282,15 +301,17 @@ exploringEvents _ _ _ = return ()
 inGameMenuEvents :: Event -> AppEnv ()
 -- Attention: menu only works OUTSIDE
 
--- Pops the in game menu
+-- Pops in/out the in-game menu
 inGameMenuEvents (KeyDown (Keysym SDLK_RETURN [] _)) = do
   (Just gd) <- getGameData
   let (x,y) = gPos gd
-  setNextState (Exploring "breizh" (x,y))
+      io    = gIO gd
+  setNextState (Exploring io (x,y))
 inGameMenuEvents (KeyDown (Keysym SDLK_x [] _)) = do
   (Just gd) <- getGameData
   let (x,y) = gPos gd
-  setNextState (Exploring "breizh" (x,y))
+      io    = gIO gd
+  setNextState (Exploring io (x,y))
   
 -- Moving the arrow UP
 inGameMenuEvents (KeyDown (Keysym SDLK_UP [] _)) = do
@@ -315,11 +336,12 @@ inGameMenuEvents (KeyDown (Keysym SDLK_c [] _)) = do
   (pos, _)  <- getMenuSelector
   (Just gd) <- getGameData
   let (x,y)   = gPos gd
+      io      = gIO gd
   
   -- Saves game
   when (pos == 5) $ do
     saveGame
-    setNextState (Exploring "breizh" (x,y))
+    setNextState (Exploring io (x,y))
   
   -- Quits game
   when (pos == 6) $ do 

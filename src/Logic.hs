@@ -26,13 +26,9 @@ performLogic NewGame01       = newGame01Logic
 performLogic NewGame02       = newGame02Logic
 performLogic NewGame03       = newGame03Logic
 performLogic MenuSettings    = menuSettingsLogic
-performLogic (Exploring mapName (x,y)) = exploringLogic mapName (x,y)
+performLogic (Exploring mapIO (x,y)) = exploringLogic mapIO (x,y)
 performLogic InGameMenu      = inGameMenuLogic
 performLogic _               = error "logic not handled!"
-
-
-
-
 
 
 
@@ -105,7 +101,7 @@ newGame03Logic = do
       player      = Player {
                       plName = pName
                     , plTeam = Nothing
-                    , plInventory = Inventory {iSize = 1, iItems = [Item "Argent" "Sert a acheter les objets utiles a vos PoKemon !"]}
+                    , plInventory = Inventory {iSize = 1, iItems = [Item "Argent" 1500 "Sert a acheter les objets utiles a vos PoKemon !"]}
                     , plBadges = []
                     }
 
@@ -141,8 +137,8 @@ menuSettingsLogic = return ()
 *            Exploring Logic
 ***********************************************************************
 -}
-exploringLogic :: String -> (Int, Int) -> AppEnv ()
-exploringLogic mapName (x,y) = do
+exploringLogic :: Where -> (Int, Int) -> AppEnv ()
+exploringLogic _ (x,y) = do
   -- Centers the camera onto the character
   (Just gd) <- getGameData
   let (pX, pY)  = gPos gd

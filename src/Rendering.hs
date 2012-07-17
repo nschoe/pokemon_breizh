@@ -33,7 +33,7 @@ rendering NewGame01           = newGame01Rendering
 rendering NewGame02           = newGame02Rendering
 rendering NewGame03           = newGame03Rendering
 rendering MenuSettings        = menuSettingsRendering
-rendering (Exploring mapName (x,y)) = exploringRendering mapName (x,y)
+rendering (Exploring mapIO (x,y)) = exploringRendering mapIO (x,y)
 rendering InGameMenu          = inGameMenuRendering
 rendering _                   = return ()
 
@@ -50,7 +50,7 @@ drawCharacter = do
   -- Gets resources
   playerSprites      <- getPlayerSprites
   playerClips        <- getPlayerClips
-  (Rect cx cy cw ch) <- getCamera 
+  (Rect cx cy _ _)   <- getCamera 
   let clip        = Map.lookup dir playerClips
   
   -- Computes the position for blitting
@@ -142,9 +142,7 @@ newGame01Rendering = do
   let newGameBg   = bgs ! 0
 
   -- Blits
-  liftIO $ do
-    applySurface 0 0 newGameBg screen Nothing
-
+  liftIO $ applySurface 0 0 newGameBg screen Nothing
   return ()
 
 
@@ -163,9 +161,7 @@ newGame02Rendering = do
   let newGameBg   = bgs ! 1
 
   -- Blits
-  liftIO $ do
-    applySurface 0 0 newGameBg screen Nothing
-
+  liftIO $ applySurface 0 0 newGameBg screen Nothing
   return ()
 
 
@@ -184,9 +180,7 @@ newGame03Rendering = do
   let newGameBg   = bgs ! 2
 
   -- Blits
-  liftIO $ do
-    applySurface 0 0 newGameBg screen Nothing
-
+  liftIO $ applySurface 0 0 newGameBg screen Nothing
   return ()
 
 
@@ -236,8 +230,8 @@ menuSettingsRendering = do
 *            Exploring Rendering
 ***********************************************************************
 -}
-exploringRendering :: String -> (Int, Int) -> AppEnv ()
-exploringRendering mapName (x,y) = do
+exploringRendering :: Where -> (Int, Int) -> AppEnv ()
+exploringRendering _ _ = do
   -- First: draw the map
   drawMap
   
@@ -268,5 +262,4 @@ inGameMenuRendering = do
   let x = 568
       y = 52 + pos*95
   liftIO $ applySurface x y arrowSprite screen Nothing
-  
   return ()
