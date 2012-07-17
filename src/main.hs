@@ -63,9 +63,13 @@ initEnv mapFile = do
                                                                  , (StopLeft, (184, 129, 48, 48))
                                                                  , (StopRight, (192, 193, 48, 48))
                                                                  , (WalkingUp, (128, 0, 48, 48))
+                                                                 , (WalkingUp', (315, 147, 48, 48))
                                                                  , (WalkingDown, (129, 129, 48, 48))
+                                                                 , (WalkingDown', (129, 194, 48, 48))
                                                                  , (WalkingLeft, (579, 316, 48, 48))
-                                                                 , (WalkingRight, (633, 316, 48, 48))
+                                                                 , (WalkingLeft', (579, 443, 48, 48))  
+                                                                 , (WalkingRight, (646, 316, 48, 48))
+                                                                 , (WalkingRight', (646, 379, 48, 48))  
                                                                   ]
       plClips    = fromList plClpsList
       insideWorld = Nothing
@@ -153,7 +157,7 @@ main = withInit [InitVideo, InitTimer] $ do
              putStrLn "Failed to initialize SDL TTF"
              exitFailure
          else do
-           enableKeyRepeat 100 100
+           enableKeyRepeat 25 50
            (res, dat) <- initEnv "breizh"
            evalStateT (runReaderT loop res) dat
            TTFG.quit

@@ -39,38 +39,6 @@ rendering _                   = return ()
 
 
 
--- Function to display the map on the screen
--- drawMap assumes the Game Data is filled in (Nothing will fail)
-drawMap :: AppEnv ()
-drawMap = do
-  -- Knows if we have to draw the inside or current map
-  mapIO <- liftM (gIO . (fromMaybe (error "calling drawMap while Game Data not set!"))) getGameData
-   
-  world@World{ wField = field, wDim = (width, height) } <- case mapIO of 
-    Outside -> getCurrentWorld
-    Inside  -> liftM (fromMaybe (error "drawMap called, with Inside set and no Inside map loaded")) getInsideWorld
-    
-  -- Gets other resources
-  camera@(Rect cx cy cw ch) <- getCamera
-  screen                    <- getScreen
-  spriteSheet               <- getSpriteSheet
-  
-  -- Creates a list of the visible tiles
-  let topLeftX     = ptt cx
-      topLeftY     = ptt cy
-      bottomRightX = ptt (cx + cw)
-      bottomRightY = ptt (cy + ch)
-      visibleTiles = [(i,j) | i <- [topLeftX..bottomRightX-1], j <- [topLeftY..bottomRightY-1]]
-
-
-  -- Blits them
-  liftIO $ forM_ visibleTiles $ \(i,j) -> do
-    let (x,y) = (ttp i - cx, ttp j - cy)
-        clip  = clips ! (field ! (j,i))
-    applySurface x y spriteSheet screen (Just clip)
-
-
-
 -- Displays the character, with the right sprite, at the right position
 drawCharacter :: AppEnv ()
 drawCharacter = do
@@ -86,8 +54,8 @@ drawCharacter = do
   let clip        = Map.lookup dir playerClips
   
   -- Computes the position for blitting
-  let xPixel = ttp x - cx
-      yPixel = ttp y - cy
+  let xPixel = x - cx
+      yPixel = y - cy
   
   -- Blits
   screen <- getScreen

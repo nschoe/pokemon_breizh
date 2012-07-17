@@ -27,6 +27,8 @@ module Helper (
               , parseGameData
               , saveGame 
               , loadGame  
+              , centerCamera  
+              , drawMap  
               , moveCharacter 
               , getScreen
               , getSpriteSheet
@@ -68,7 +70,7 @@ import Control.Monad.Reader
 import Data.Array (Array(..), (!))
 import Data.List (nub)
 import Data.Map (Map)
-import qualified Data.Map as Map ((!))
+import qualified Data.Map as Map ((!), lookup)
 import Data.Maybe (fromMaybe)
 import Data.Word (Word16)
 
@@ -78,7 +80,7 @@ import Graphics.UI.SDL.TTF.Types (Font)
 
 import System.FilePath (FilePath, (</>))
 
-import Config (tileDim)
+import Config (tileDim, clips)
 import Pokemap (World(..))
 import Timer (Timer(..))
 import Types
@@ -213,10 +215,67 @@ loadGame = do
 
   -- Attaches the newly-loaded game data in the global state
   putGameData (Just gd)
+  
+  
+  
+-- Function to display the map on the screen
+-- drawMap assumes the Game Data is filled in (Nothing will fail)
+drawMap :: AppEnv ()
+drawMap = do
+  -- Knows if we have to draw the inside or current map
+  mapIO <- liftM (gIO . (fromMaybe (error "calling drawMap while Game Data not set!"))) getGameData
+   
+  world@World{ wField = field, wDim = (width, height) } <- case mapIO of 
+    Outside -> getCurrentWorld
+    Inside  -> liftM (fromMaybe (error "drawMap called, with Inside set and no Inside map loaded")) getInsideWorld
+    
+  -- Gets other resources
+  camera@(Rect cx cy cw ch) <- getCamera
+  screen                    <- getScreen
+  spriteSheet               <- getSpriteSheet
+  
+  -- Creates a list of the visible tiles
+  let topLeftX     = ptt cx
+      topLeftY     = ptt cy
+      bottomRightX = ptt (cx + cw)
+      bottomRightY = ptt (cy + ch)
+      visibleTiles = [(i,j) | i <- [topLeftX..bottomRightX-1], j <- [topLeftY..bottomRightY-1]]
+
+
+  -- Blits them
+  liftIO $ forM_ visibleTiles $ \(i,j) -> do
+    let (x,y) = (ttp i - cx, ttp j - cy)
+        clip  = clips ! (field ! (j,i))
+    applySurface x y spriteSheet screen (Just clip)  
+    
+    
+    
+-- Centers the camera over the character
+centerCamera :: (Int, Int) -> AppEnv ()
+centerCamera (x, y) = do  
+  -- Gets the position of the player and the current camera
+  camera@(Rect cx cy cw ch) <- getCamera
+  
+  -- Guesses which maps to load, and reads its dimension
+  mapIO    <- liftM (gIO . (fromMaybe (error "calling centerCamera where game data not initialized!"))) getGameData
+  world@World{ wDim = (lvlW, lvlH) } <- case mapIO of
+    Outside -> getCurrentWorld
+    Inside  -> liftM (fromMaybe (error "centerCamera called with Inside set and no inside map loaded!")) getInsideWorld
+
+  -- Computes new position
+  -- Problem: for now, the field is 16*16, or 16 is even.
+  -- So, the character cannot be centered
+  let cx'  = x - cw `div` 2
+      cy'  = y - ch `div` 2
+      cx'' = if (cx'+cw) > (lvlW*tileDim) || cx' < 0 then cx else cx'
+      cy'' = if (cy'+ch) > (lvlH*tileDim) || cy' < 0 then cy else cy'
+  
+  -- Puts the new camera
+  putCamera (Rect cx'' cy'' cw ch)
 
 
 
--- Checks if the character can access the asked tile, and move it
+-- Checks if the character can access the asked tile, and moves it
 moveCharacter :: MoveDir -> AppEnv ()
 moveCharacter moveDir = do
   -- Gets GameData and position and world dimension
@@ -232,25 +291,96 @@ moveCharacter moveDir = do
   
   -- Computes new position
       (x', y') = case moveDir of
-        MoveUp    -> (x, y-1)
-        MoveDown  -> (x, y+1)
-        MoveLeft  -> (x-1, y)
-        MoveRight -> (x+1, y)
+        MoveUp    -> (x, y-tileDim)
+        MoveDown  -> (x, y+tileDim)
+        MoveLeft  -> (x-tileDim, y)
+        MoveRight -> (x+tileDim, y)
+        
   
-  -- Checks if accessed square is authorized
-  -- should check on list of forbidden tiles...
-      x'' = if x' < 0 || x' > lvlW then x else x'
-      y'' = if y' < 0 || y' > lvlH then y else y'
+  -- Keeps next position in bound
+      x'' = if x' < 0 || x' > (lvlW * tileDim) then x else x'
+      y'' = if y' < 0 || y' > (lvlH * tileDim) then y else y'
       
-      nextTileType = field ! (y'', x'')
-      (nextX, nextY) = case nextTileType `elem` forbiddenTiles of
-        False -> (x'', y'')
-        True  -> (x, y)
+      nextTileType = field ! (ptt y'', ptt x'')
+      
+  -- Proceeds to the mouvement if next tile is valid
+  when (not (nextTileType `elem` forbiddenTiles)) (animatedWalking moveDir)
   
-  -- Actually moves the player
-  putGameData (Just gd{ gPos = (nextX, nextY) })  
+  
+  
+-- Animates the walking from a tile to an adjacent one  
+animatedWalking :: MoveDir -> AppEnv ()
+animatedWalking moveDir = do
+  -- Gets resources
+  screen           <- getScreen
+  (Rect cx cy _ _) <- getCamera
+  playerSprites    <- getPlayerSprites
+  playerClips      <- getPlayerClips
+  
+  -- Gets the current player's position
+  (Just gd)       <- getGameData
+  let (x, y)       = gPos gd
+  
+  -- Creates the list of intermediate positions based on the MoveDir
+      positions    = case moveDir of
+        MoveUp     -> [(x,toY) | toY <- [y,y-4..y-tileDim]]
+        MoveDown   -> [(x,toY) | toY <- [y,y+4..y+tileDim]]
+        MoveLeft   -> [(toX,y) | toX <- [x,x-4..x-tileDim]]
+        MoveRight  -> [(toX,y) | toX <- [x,x+4..x+tileDim]]
+  
+  -- Shifts position with respect to the camera
+      shiftedPositions = map (\(x', y') -> (x'-cx,y'-cy)) positions
+  
+      spriteDir    = case moveDir of
+          MoveUp     -> if even (ptt x + ptt y) then WalkingUp else WalkingUp'
+          MoveDown   -> if even (ptt x + ptt y) then WalkingDown else WalkingDown'
+          MoveLeft   -> if even (ptt x + ptt y) then WalkingLeft else WalkingLeft'
+          MoveRight  -> if even (ptt x + ptt y) then WalkingRight else WalkingRight'  
+      
+      clip         = Map.lookup spriteDir playerClips
+  forM_ positions $ \(pX, pY) -> do
+    centerCamera (pX, pY)
+    (Rect cx cy   _ _) <- getCamera
+    drawMap
+    liftIO $ applySurface (pX-cx) (pY-cy) playerSprites screen clip
+    liftIO $ SDL.flip screen
+    liftIO $ SDL.delay 10
 
-
+  -- Updates positions
+  putGameData (Just gd{ gPos = (last positions) })
+  
+-- Animates the walking process from the start position to the target position
+  {-
+animatedWalking :: (Int, Int) -> (Int,  Int) -> MoveDir -> AppEnv ()
+animatedWalking (fromX, fromY) (toX, toY) dir = do
+  -- Computes new positions (to intermediate displaying)
+  let positions = case dir of
+        MoveUp    -> [(fromX, y) | y <- [fromY,fromY-1..toY]]
+        MoveDown  -> [(fromX, y) | y <- [fromY..toY]]
+        MoveLeft  -> [(x, fromY) | x <- [fromX,fromX-1..toX]]
+        MoveRight -> [(x, fromY) | x <- [fromX..toX]]
+        
+  -- Gets resources
+  playerSprites     <- getPlayerSprites
+  playerClips       <- getPlayerClips
+  (Just gd)         <- getGameData
+  screen            <- getScreen
+  (Rect cx cy _ _)  <- getCamera
+  let spriteDir     = gDir gd
+      clip          = Map.lookup spriteDir playerClips
+      displayPos    = map (\(x,y) -> (x-cx, y-cy)) positions
+        
+  -- Blits all intermediate positions
+  forM_ displayPos $ \(x,y) -> do
+    centerCamera (x,y) 
+    drawMap
+    liftIO $ applySurface x y playerSprites screen clip
+    liftIO $ SDL.flip screen
+    liftIO $ SDL.delay 5
+  
+  -- Updates final position
+  putGameData (Just gd{ gPos = (toX, toY) })
+-}
 
 -- Accessor functions
 -- AppResource (MonadReader)

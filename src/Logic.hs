@@ -12,7 +12,7 @@ import Data.Time.Clock.POSIX
 import Graphics.UI.SDL (Rect(..))
 
 import Config (tileDim, startingPosition)
-import Helper (settings, getGameData, putGameData, putCamera, getCamera, ttp, getInsideWorld, getCurrentWorld, putMenuSelector, getMenuSelector)
+import Helper (settings, getGameData, putGameData, putCamera, getCamera, ttp, getInsideWorld, getCurrentWorld, putMenuSelector, getMenuSelector, centerCamera)
 import Pokemap (World(..))
 import Settings
 import Types
@@ -32,32 +32,7 @@ performLogic _               = error "logic not handled!"
 
 
 
--- Centers the camera over the character
-centerCamera :: AppEnv ()
-centerCamera = do
-  -- Gets the game data (should always be called when game data is initialized)
-  (Just gd)  <- getGameData
-  
-  -- Gets the position of the player and the current camera
-  let (x, y)               = gPos gd
-  camera@(Rect cx cy cw ch) <- getCamera
-  
-  -- Guesses which maps to load, and reads its dimension
-  mapIO    <- liftM (gIO . (fromMaybe (error "calling centerCamera where game data not initialized!"))) getGameData
-  world@World{ wDim = (lvlW, lvlH) } <- case mapIO of
-    Outside -> getCurrentWorld
-    Inside  -> liftM (fromMaybe (error "centerCamera called with Inside set and no inside map loaded!")) getInsideWorld
 
-  -- Computes new position
-  -- Problem: for now, the field is 16*16, or 16 is even.
-  -- So, the character cannot be centered
-  let cx'  = ttp x - cw `div` 2
-      cy'  = ttp y - ch `div` 2
-      cx'' = if (cx'+cw) > (lvlW*tileDim) || cx' < 0 then cx else cx'
-      cy'' = if (cy'+ch) > (lvlH*tileDim) || cy' < 0 then cy else cy'
-  
-  -- Puts the new camera
-  putCamera (Rect cx'' cy'' cw ch)
 
 
 
@@ -169,7 +144,9 @@ menuSettingsLogic = return ()
 exploringLogic :: String -> (Int, Int) -> AppEnv ()
 exploringLogic mapName (x,y) = do
   -- Centers the camera onto the character
-  centerCamera
+  (Just gd) <- getGameData
+  let (pX, pY)  = gPos gd
+  centerCamera (pX, pY)
   
   
   

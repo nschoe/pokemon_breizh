@@ -11,6 +11,7 @@ import Graphics.UI.SDL as SDL
 import System.Directory (doesFileExist)
 import System.IO (openFile, IOMode(..), hFileSize)
 
+import Config (startingPosition)
 import Helper
 import Types
 
@@ -63,6 +64,7 @@ setNextState' gs@(Exploring mapName (x, y)) = do
   let io    = if (mapName == "breizh") then Outside else Inside
   (Just gd) <- getGameData
   putGameData (Just gd{ gIO = io, gPos = (x,y) })
+  centerCamera (x,y)
   putNextState gs
 setNextState' gs = putNextState gs
 
@@ -203,7 +205,7 @@ newGame02Events _ = return ()
 ***********************************************************************
 -}
 newGame03Events :: Event -> AppEnv ()
-newGame03Events (KeyDown (Keysym SDLK_RETURN [] _)) = setNextState (Exploring "breizh" (1, 5))
+newGame03Events (KeyDown (Keysym SDLK_RETURN [] _)) = setNextState (Exploring "breizh" startingPosition)
 newGame03Events _ = return ()
 
 
@@ -228,40 +230,40 @@ exploringEvents :: String -> (Int, Int) -> Event -> AppEnv ()
 
 --  Moves character up
 exploringEvents mapName (x, y) (KeyDown (Keysym SDLK_UP [] _)) = do
-  -- Moves the character up
-  moveCharacter MoveUp
-  
   -- Sets the new sprite
   (Just gd) <- getGameData
   putGameData (Just gd{ gDir = StopUp })
   
+  -- Moves the character up
+  moveCharacter MoveUp
+
 --  Moves character down
 exploringEvents mapName (x, y) (KeyDown (Keysym SDLK_DOWN [] _)) = do
-  -- Moves the character down
-  moveCharacter MoveDown
-  
   -- Sets the new sprite
   (Just gd) <- getGameData
   putGameData (Just gd{ gDir = StopDown })  
   
+  -- Moves the character down
+  moveCharacter MoveDown
+  
 --  Moves character left
 exploringEvents mapName (x, y) (KeyDown (Keysym SDLK_LEFT [] _)) = do
-  -- Moves the character left
-  moveCharacter MoveLeft
-  
   -- Sets the new sprite
   (Just gd) <- getGameData
   putGameData (Just gd{ gDir = StopLeft })  
   
+  -- Moves the character left
+  moveCharacter MoveLeft
+    
 --  Moves character right
 exploringEvents mapName (x, y) (KeyDown (Keysym SDLK_RIGHT [] _)) = do
-  -- Moves the character right
-  moveCharacter MoveRight
-  
   -- Sets the new sprite
   (Just gd) <- getGameData
   putGameData (Just gd{ gDir = StopRight })  
   
+  -- Moves the character right
+  moveCharacter MoveRight
+
 -- Start press: displays in game menu
 exploringEvents _ _ (KeyDown (Keysym SDLK_RETURN [] _)) = do
   (pos, _) <- getMenuSelector

@@ -106,7 +106,7 @@ data AppData = AppData {
 data GameData = GameData {
       gPlayer          :: Player
     , gLove            :: String
-    , gPos             :: (Int, Int) -- (x, y) player position on the map (in tiles)
+    , gPos             :: (Int, Int) -- (x, y) player position on the map (in pixel)
     , gDir             :: Direction  -- to know what tile to display
     , gClock           :: Integer    -- Stores the timestamp when the charatcers started playing.
     , gIO              :: Where      -- Tells if we must display the Inside or Outside world 
@@ -179,9 +179,13 @@ data Direction =
                | StopLeft
                | StopRight
                | WalkingUp
+               | WalkingUp'
                | WalkingDown
+               | WalkingDown'
                | WalkingLeft
+               | WalkingLeft'
                | WalkingRight
+               | WalkingRight'
                  deriving (Eq, Show, Read, Bounded, Enum, Ord)
                           
 -- Basic Enum type used in moveCharacter, to know what direction the player wants to go
